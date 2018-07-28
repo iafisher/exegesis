@@ -1,0 +1,25 @@
+#projectlist {
+    font-size: 18px;
+    line-height: 1.5;
+}
+
+h1 {
+    text-align: center;
+}
+
+th {
+    font-weight: normal;
+    text-align: left;
+    padding-right: 10px;
+}
+
+form {
+    /* So that #importButton can be centered within the bounds of the form. */
+    display: inline-block;
+}
+
+#importButton {
+    display: block;
+    margin: 0 auto;
+    margin-top: 10px;
+}

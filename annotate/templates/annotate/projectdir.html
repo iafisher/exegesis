@@ -22,7 +22,12 @@
     {% for file in files %}
     <li>
       <i class="fi-page"></i>
-      <a href="{{ file.get_absolute_url }}">{{ file.name }}</a>
+      <a href="{{ file.get_absolute_url }}">
+        {{ file.name }}
+        {% if file.comment_set.all|length != 0 %}
+        ({{ file.comment_set.all|length }} comment{{ file.comment_set.all|length|pluralize }})
+        {% endif %}
+      </a>
     </li>
     {% endfor %}
   </ul>

@@ -4,4 +4,30 @@ li i {
 
 ul {
     list-style-type: none;
+    font-size: 18px;
+    line-height: 1.5;
+}
+
+.hljs-ln td {
+    padding-right: 15px;
+}
+
+.hljs-ln-code:hover {
+    background-color: lightgray;
+}
+
+code {
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+textarea.comment {
+    width: 400px;
+    height: 100px;
+}
+
+.comment {
+    font-size: 14px;
+    line-height: 1.5;
+    font-family: sans-serif;
 }

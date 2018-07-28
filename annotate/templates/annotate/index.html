@@ -1,7 +1,15 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
+{% block extrahead %}
+<link rel="stylesheet" href="{% static 'annotate/css/index.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="container">
+  <h1>Exegesis</h1>
+
   {% if success is True %}
   <p>Project imported successfully!</p>
   {% endif %}
@@ -11,9 +19,13 @@
   {% endif %}
 
   <h2>Available projects</h2>
-  <ul>
+  <ul id="projectlist">
     {% for project in projects %}
-    <li><a href="{{ project.get_absolute_url }}">{{ project.title }}</a></li>
+    <li>
+      <a href="{{ project.get_absolute_url }}">
+        {{ project.title }} ({{ project.comment_count }} comment{{ project.comment_count|pluralize }})
+      </a>
+    </li>
     {% empty %}
     <li>No projects found.</li>
     {% endfor %}
@@ -22,8 +34,12 @@
   <h2>Import a project from GitHub</h2>
   <form action="/import" method="post">
     {% csrf_token %}
-    {{ form }}
-    <input type="submit" value="Import"/>
+    <table>
+      <tbody>
+        {{ form.as_table }}
+      </tbody>
+    </table>
+    <input id="importButton" type="submit" value="Import"/>
   </form>
 </div>
 {% endblock %}

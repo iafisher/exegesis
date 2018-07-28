@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -10,6 +11,15 @@ from .models import Comment, Project, ProjectFile
 
 def index(request, success=None):
     projects = Project.objects.all()
+
+    # Calculate the number of comments on each project.
+    comment_count = defaultdict(int)
+    for comment in Comment.objects.all():
+        comment_count[comment.projectfile.project.title] += 1
+
+    for project in projects:
+        project.comment_count = comment_count[project.title]
+
     context = {
         'projects': projects,
         'form': ImportProjectForm(),
