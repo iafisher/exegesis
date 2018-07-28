@@ -3,7 +3,7 @@ import json
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .models import Comment, Snippet
+from .models import Comment, Project, ProjectComment, ProjectFile, Snippet
 
 
 def index(request):
@@ -20,6 +20,52 @@ def snippet(request, path):
         'path_json': json.dumps(snip.path),
     }
     return render(request, 'annotate/snippet.html', context)
+
+
+def project(request, title):
+    proj = get_object_or_404(Project, title=title)
+    directories = [f for f in proj.projectfile_set.order_by('name')
+        if f.filetype == ProjectFile.DIRECTORY]
+    files = [f for f in proj.projectfile_set.order_by('name')
+        if f.filetype == ProjectFile.REGULAR_FILE]
+    context = {
+        'project': proj,
+        'directories': directories,
+        'files': files,
+    }
+    return render(request, 'annotate/project.html', context)
+
+
+def projectfile_or_dir(request, title, path):
+    proj = get_object_or_404(Project, title=title)
+    projfile = get_object_or_404(ProjectFile, project=proj, name=path)
+    if projfile.filetype == ProjectFile.DIRECTORY:
+        return projectdir(request, proj, projfile)
+    else:
+        return projectfile(request, proj, projfile)
+
+
+def projectdir(request, proj, projfile):
+    eligible = proj.projectfile_set.filter(name__startswith=projfile.name + '/')
+    directories = [f for f in eligible if f.filetype == ProjectFile.DIRECTORY]
+    files = [f for f in eligible if f.filetype == ProjectFile.REGULAR_FILE]
+    context = {
+        'project': proj,
+        'dir': projfile,
+        'directories': directories,
+        'files': files,
+    }
+    return render(request, 'annotate/projectdir.html', context)
+
+
+def projectfile(request, proj, projfile):
+    comments = ProjectComment.objects.filter(projectfile=projfile)
+    context = {
+        'file': projfile,
+        'comments_json': json.dumps([c.to_json() for c in comments]),
+        'path_json': json.dumps(projfile.name),
+    }
+    return render(request, 'annotate/projectfile.html', context)
 
 
 def update_comment(request, path):

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Exegesis | {{ project.title }}{% endblock %}
+
+{% block extrahead %}
+<link rel="stylesheet" href="{% static 'annotate/css/project.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2>{{ project.title }}</h2>
+  <ul>
+    {% for directory in directories %}
+    <li>
+      <i class="fi-folder"></i>
+      <a href="{{ directory.get_absolute_url }}">{{ directory.name }}</a>
+    </li>
+    {% endfor %}
+    {% for file in files %}
+    <li>
+      <i class="fi-page"></i>
+      <a href="{{ file.get_absolute_url }}">{{ file.name }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
