@@ -55,7 +55,9 @@ function insertCommentForm(row, text) {
     commentRow.classList.add("comment-row");
 
     let cancelButton = buttonFactory("Cancel", () => {
-        insertSavedComment(row, text);
+        if (text.length > 0) {
+            insertSavedComment(row, text);
+        }
         commentRow.remove();
     })
 
