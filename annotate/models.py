@@ -18,6 +18,11 @@ class ProjectFile(models.Model):
     name = models.CharField(max_length=100)
     text = models.TextField(blank=True)
 
+    # If downloaded is False, then download_source contains the URL from which
+    # the contents of the file can be downloaded.
+    downloaded = models.BooleanField()
+    download_source = models.URLField(blank=True)
+
     REGULAR_FILE = 'f'
     DIRECTORY = 'd'
     FILETYPE_CHOICES = (

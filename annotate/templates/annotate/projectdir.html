@@ -10,6 +10,7 @@
 
 {% block content %}
 <div class="container">
+  <p><a href="/">Home</a></p>
   <h2><a href="{{ project.get_absolute_url }}">{{ project.title }}</a>/{{ dir.name }}</h2>
   <ul>
     {% for directory in directories %}

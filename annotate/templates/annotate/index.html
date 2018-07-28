@@ -2,6 +2,14 @@
 
 {% block content %}
 <div class="container">
+  {% if success is True %}
+  <p>Project imported successfully!</p>
+  {% endif %}
+
+  {% if success is False %}
+  <p>Error: the project could not be imported.</p>
+  {% endif %}
+
   <h2>Available projects</h2>
   <ul>
     {% for project in projects %}
@@ -10,5 +18,12 @@
     <li>No projects found.</li>
     {% endfor %}
   </ul>
+
+  <h2>Import a project from GitHub</h2>
+  <form action="/import" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="Import"/>
+  </form>
 </div>
 {% endblock %}

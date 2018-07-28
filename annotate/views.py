@@ -3,20 +3,27 @@ import json
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
+from .import_project import download_from_github, import_from_github
+from .forms import ImportProjectForm
 from .models import Comment, Project, ProjectFile
 
 
-def index(request):
+def index(request, success=None):
     projects = Project.objects.all()
-    return render(request, 'annotate/index.html', {'projects': projects})
+    context = {
+        'projects': projects,
+        'form': ImportProjectForm(),
+        'success': success,
+    }
+    return render(request, 'annotate/index.html', context)
 
 
 def project(request, title):
     proj = get_object_or_404(Project, title=title)
-    directories = [f for f in proj.projectfile_set.order_by('name')
-        if f.filetype == ProjectFile.DIRECTORY]
-    files = [f for f in proj.projectfile_set.order_by('name')
-        if f.filetype == ProjectFile.REGULAR_FILE]
+    eligible = [f for f in proj.projectfile_set.order_by('name')
+        if '/' not in f.name[:-1]]
+    directories = [f for f in eligible if f.filetype == ProjectFile.DIRECTORY]
+    files = [f for f in eligible if f.filetype == ProjectFile.REGULAR_FILE]
     context = {
         'project': proj,
         'directories': directories,
@@ -48,6 +55,13 @@ def projectdir(request, proj, pfile):
 
 
 def projectfile(request, proj, pfile):
+    if not pfile.downloaded:
+        contents = download_from_github(pfile.download_source)
+        if contents:
+            pfile.text = contents
+            pfile.downloaded = True
+            pfile.save()
+
     comments = Comment.objects.filter(projectfile=pfile)
     context = {
         'file': pfile,
@@ -86,3 +100,16 @@ def delete_comment(request, title, path):
         return HttpResponse()
     else:
         return redirect('annotate:projectfile', title=title, path=path)
+
+
+def import_project(request):
+    if request.method == 'POST':
+        form = ImportProjectForm(request.POST)
+        if form.is_valid():
+            import_from_github(form.cleaned_data['username'],
+                form.cleaned_data['reponame'], form.cleaned_data['sha'])
+            return redirect('annotate:success')
+        else:
+            return redirect('annotate:failure')
+    else:
+        return redirect('annotate:index')
