@@ -348,4 +348,5 @@ template {
 div.container {
     margin: 0 auto;
     width: 80%;
+    margin-top: 40px;
 }
