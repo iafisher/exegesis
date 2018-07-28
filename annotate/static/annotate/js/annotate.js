@@ -31,8 +31,9 @@ function attachListeners() {
     }
 
     let insertCount = 0;
-    // comments is a global variable defined in an inline script in snippet.html
-    // Its value ultimately comes from the back-end database by way of Django.
+    // comments is a global variable defined in an inline script in
+    // projectfile.html. Its value ultimately comes from the back-end database
+    // by way of Django.
     for (let comment of comments) {
         let row = document.querySelector("tr:nth-child(" + (comment.lineno + insertCount) + ")");
         insertSavedComment(row, comment.text);
@@ -123,13 +124,13 @@ function buttonFactory(label, clickhandler) {
 
 function saveCommentToDatabase(row, text) {
     let lineno = parseInt(row.children[0].children[0].getAttribute('data-line-number'));
-    postData("/snippet/" + path + "/update", { text: text, lineno: lineno });
+    postData(path + "/update", { text: text, lineno: lineno });
 }
 
 
 function deleteCommentFromDatabase(row) {
     let lineno = parseInt(row.children[0].children[0].getAttribute('data-line-number'));
-    postData("/snippet/" + path + "/delete", { lineno: lineno });
+    postData(path + "/delete", { lineno: lineno });
 }
 
 

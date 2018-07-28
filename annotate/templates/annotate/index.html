@@ -2,18 +2,13 @@
 
 {% block content %}
 <div class="container">
-  <h2>Available snippets</h2>
-  <ul>
-    {% for snippet in snippets %}
-    <li><a href="{{ snippet.get_absolute_url }}">{{ snippet.path }}</a></li>
-    {% empty %}
-    <li>No snippets found.</li>
-    {% endfor %}
-  </ul>
-
   <h2>Available projects</h2>
   <ul>
-    <li><a href="/project/github:iafisher:autosuite">Autosuite</a></li>
+    {% for project in projects %}
+    <li><a href="{{ project.get_absolute_url }}">{{ project.title }}</a></li>
+    {% empty %}
+    <li>No projects found.</li>
+    {% endfor %}
   </ul>
 </div>
 {% endblock %}

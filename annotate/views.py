@@ -3,23 +3,12 @@ import json
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .models import Comment, Project, ProjectComment, ProjectFile, Snippet
+from .models import Comment, Project, ProjectFile
 
 
 def index(request):
-    snippets = Snippet.objects.all()
-    return render(request, 'annotate/index.html', {'snippets': snippets})
-
-
-def snippet(request, path):
-    snip = get_object_or_404(Snippet, path=path)
-    comments = Comment.objects.filter(snippet=snip)
-    context = {
-        'snippet': snip,
-        'comments_json': json.dumps([c.to_json() for c in comments]),
-        'path_json': json.dumps(snip.path),
-    }
-    return render(request, 'annotate/snippet.html', context)
+    projects = Project.objects.all()
+    return render(request, 'annotate/index.html', {'projects': projects})
 
 
 def project(request, title):
@@ -33,64 +22,67 @@ def project(request, title):
         'directories': directories,
         'files': files,
     }
-    return render(request, 'annotate/project.html', context)
+    return render(request, 'annotate/projectdir.html', context)
 
 
 def projectfile_or_dir(request, title, path):
     proj = get_object_or_404(Project, title=title)
-    projfile = get_object_or_404(ProjectFile, project=proj, name=path)
-    if projfile.filetype == ProjectFile.DIRECTORY:
-        return projectdir(request, proj, projfile)
+    pfile = get_object_or_404(ProjectFile, project=proj, name=path)
+    if pfile.filetype == ProjectFile.DIRECTORY:
+        return projectdir(request, proj, pfile)
     else:
-        return projectfile(request, proj, projfile)
+        return projectfile(request, proj, pfile)
 
 
-def projectdir(request, proj, projfile):
-    eligible = proj.projectfile_set.filter(name__startswith=projfile.name + '/')
+def projectdir(request, proj, pfile):
+    eligible = proj.projectfile_set.filter(name__startswith=pfile.name + '/')
     directories = [f for f in eligible if f.filetype == ProjectFile.DIRECTORY]
     files = [f for f in eligible if f.filetype == ProjectFile.REGULAR_FILE]
     context = {
         'project': proj,
-        'dir': projfile,
+        'dir': pfile,
         'directories': directories,
         'files': files,
     }
     return render(request, 'annotate/projectdir.html', context)
 
 
-def projectfile(request, proj, projfile):
-    comments = ProjectComment.objects.filter(projectfile=projfile)
+def projectfile(request, proj, pfile):
+    comments = Comment.objects.filter(projectfile=pfile)
     context = {
-        'file': projfile,
+        'file': pfile,
         'comments_json': json.dumps([c.to_json() for c in comments]),
-        'path_json': json.dumps(projfile.name),
+        'path_json': json.dumps(pfile.get_absolute_url()),
     }
     return render(request, 'annotate/projectfile.html', context)
 
 
-def update_comment(request, path):
-    snip = get_object_or_404(Snippet, path=path)
+def update_comment(request, title, path):
+    proj = get_object_or_404(Project, title=title)
+    pfile = get_object_or_404(ProjectFile, project=proj, name=path)
     if request.method == 'POST':
         obj = json.loads(request.body.decode('utf-8'))
         text = obj['text']
         lineno = obj['lineno']
         comment, _ = Comment.objects.get_or_create(
-            lineno=lineno, snippet=snip
+            lineno=lineno, projectfile=pfile
         )
         comment.text = text
         comment.save()
         return HttpResponse()
     else:
-        return redirect('annotate:snippet', path=path)
+        return redirect('annotate:projectfile', title=title, path=path)
 
 
-def delete_comment(request, path):
-    snip = get_object_or_404(Snippet, path=path)
+def delete_comment(request, title, path):
+    proj = get_object_or_404(Project, title=title)
+    pfile = get_object_or_404(ProjectFile, project=proj, name=path)
     if request.method == 'POST':
         obj = json.loads(request.body.decode('utf-8'))
         lineno = obj['lineno']
-        comment = get_object_or_404(Comment, lineno=lineno, snippet=snip)
+        comment = get_object_or_404(Comment, lineno=lineno,
+            projectfile=pfile)
         comment.delete()
         return HttpResponse()
     else:
-        return redirect('annotate:snippet', path=path)
+        return redirect('annotate:projectfile', title=title, path=path)
