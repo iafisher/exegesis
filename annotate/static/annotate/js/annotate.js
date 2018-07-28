@@ -23,15 +23,20 @@ function attachListeners() {
 
     for (let item of lineNumbers) {
         item.addEventListener("click", () => {
-            insertCommentForm(item.parentNode, "");
+            let nextRow = item.parentNode.nextElementSibling;
+            if (nextRow === null || !nextRow.classList.contains("comment-row")) {
+                insertCommentForm(item.parentNode, "");
+            }
         });
     }
 
+    let insertCount = 0;
     // comments is a global variable defined in an inline script in snippet.html
     // Its value ultimately comes from the back-end database by way of Django.
     for (let comment of comments) {
-        let row = document.querySelector("tr:nth-child(" + comment.lineno + ")");
+        let row = document.querySelector("tr:nth-child(" + (comment.lineno + insertCount) + ")");
         insertSavedComment(row, comment.text);
+        insertCount++;
     }
 }
 
@@ -42,18 +47,27 @@ function attachListeners() {
  */
 function insertCommentForm(row, text) {
     let textarea = document.createElement("textarea");
-    let tableData = document.createElement("td");
-    let commentRow = document.createElement("tr");
-
     textarea.classList.add("comment");
     textarea.value = text;
 
+    let tableData = document.createElement("td");
+    let commentRow = document.createElement("tr");
+    commentRow.classList.add("comment-row");
+
     let cancelButton = buttonFactory("Cancel", () => {
+        insertSavedComment(row, text);
         commentRow.remove();
     })
 
     let saveButton = buttonFactory("Save", () => {
-        insertSavedComment(commentRow, textarea.value);
+        let text = textarea.value.trim();
+
+        if (text.length > 0) {
+            saveCommentToDatabase(row, textarea.value);
+            insertSavedComment(row, textarea.value);
+        } else {
+            deleteCommentFromDatabase(row);
+        }
         commentRow.remove();
     });
 
@@ -72,16 +86,19 @@ function insertCommentForm(row, text) {
  */
 function insertSavedComment(row, text) {
     let commentRow = document.createElement("tr");
+    commentRow.classList.add("comment-row");
+
     let p = document.createElement("p");
     p.classList.add("comment");
     p.innerHTML = text;
 
     let deleteButton = buttonFactory("Delete", () => {
+        deleteCommentFromDatabase(row);
         commentRow.remove();
     });
 
     let editButton = buttonFactory("Edit", () => {
-        insertCommentForm(commentRow, p.innerHTML);
+        insertCommentForm(row, p.innerHTML);
         commentRow.remove();
     });
 
@@ -99,6 +116,34 @@ function buttonFactory(label, clickhandler) {
     button.innerHTML = label;
     button.addEventListener("click", clickhandler);
     return button;
+}
+
+
+function saveCommentToDatabase(row, text) {
+    let lineno = parseInt(row.children[0].children[0].getAttribute('data-line-number'));
+    postData("/snippet/" + path + "/update", { text: text, lineno: lineno });
+}
+
+
+function deleteCommentFromDatabase(row) {
+    let lineno = parseInt(row.children[0].children[0].getAttribute('data-line-number'));
+    postData("/snippet/" + path + "/delete", { lineno: lineno });
+}
+
+
+let csrftoken = Cookies.get("csrftoken");
+function postData(path, data) {
+    fetch(path, {
+        method: "post",
+        headers: {
+            "X-CSRFToken": csrftoken,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    })
+    .catch(error => {
+        console.error('Fetch error: ', error);
+    });
 }
 
 

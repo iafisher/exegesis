@@ -24,4 +24,4 @@ class Comment(models.Model):
         return {'text': self.text, 'lineno': self.lineno}
 
     def __str__(self):
-        return 'Comment on ' + str(self.snippet)
+        return 'Comment on {0.snippet}, line {0.lineno}'.format(self)
