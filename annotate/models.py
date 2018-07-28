@@ -20,5 +20,8 @@ class Comment(models.Model):
     snippet = models.ForeignKey(Snippet, on_delete=models.CASCADE)
     lineno = models.IntegerField()
 
+    def to_json(self):
+        return {'text': self.text, 'lineno': self.lineno}
+
     def __str__(self):
         return 'Comment on ' + str(self.snippet)

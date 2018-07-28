@@ -11,70 +11,88 @@ if (document.readyState === "complete" || (document.readyState !== "loading" &&
 hljs.initHighlightingOnLoad();
 hljs.initLineNumbersOnLoad();
 
+
 function onload() {
     // Wait a short amount of time for line-number initialization to finish.
     setTimeout(attachListeners, 500);
 }
+
 
 function attachListeners() {
     let lineNumbers = document.querySelectorAll(".hljs-ln-code");
 
     for (let item of lineNumbers) {
         item.addEventListener("click", () => {
-            insertAfter(commentFactory(""), item.parentNode);
+            insertCommentForm(item.parentNode, "");
         });
     }
 
-    console.log("Listeners attached");
+    // comments is a global variable defined in an inline script in snippet.html
+    // Its value ultimately comes from the back-end database by way of Django.
+    for (let comment of comments) {
+        let row = document.querySelector("tr:nth-child(" + comment.lineno + ")");
+        insertSavedComment(row, comment.text);
+    }
 }
 
-function commentFactory(text) {
+
+/**
+ * Insert a comment form after `row`. The placeholder value of the textarea is
+ * initialized to `text`.
+ */
+function insertCommentForm(row, text) {
     let textarea = document.createElement("textarea");
     let tableData = document.createElement("td");
-    let tableRow = document.createElement("tr");
+    let commentRow = document.createElement("tr");
 
     textarea.classList.add("comment");
     textarea.value = text;
 
-    let closeButton = buttonFactory("Close", () => {
-        tableRow.remove();
+    let cancelButton = buttonFactory("Cancel", () => {
+        commentRow.remove();
     })
 
     let saveButton = buttonFactory("Save", () => {
-        let p = document.createElement("p");
-        p.classList.add("comment");
-        p.innerHTML = textarea.value;
-
-        // Remove all children of the table row.
-        while (tableRow.firstChild) {
-            tableRow.removeChild(tableRow.firstChild);
-        }
-
-        let deleteButton = buttonFactory("Delete", () => {
-            tableRow.remove();
-        });
-
-        let editButton = buttonFactory("Edit", () => {
-            let contents = p.innerHTML;
-
-            insertAfter(commentFactory(contents), tableRow);
-            tableRow.remove();
-        });
-
-        tableRow.appendChild(document.createElement("td"));
-        tableRow.appendChild(p);
-        tableRow.appendChild(deleteButton);
-        tableRow.appendChild(editButton);
+        insertSavedComment(commentRow, textarea.value);
+        commentRow.remove();
     });
 
-    tableRow.appendChild(document.createElement("td"));
-    tableRow.appendChild(tableData);
+    commentRow.appendChild(document.createElement("td"));
+    commentRow.appendChild(tableData);
     tableData.appendChild(textarea);
-    tableData.appendChild(closeButton);
+    tableData.appendChild(cancelButton);
     tableData.appendChild(saveButton);
 
-    return tableRow;
+    insertAfter(commentRow, row);
 }
+
+
+/**
+ * Insert a comment after `row`.
+ */
+function insertSavedComment(row, text) {
+    let commentRow = document.createElement("tr");
+    let p = document.createElement("p");
+    p.classList.add("comment");
+    p.innerHTML = text;
+
+    let deleteButton = buttonFactory("Delete", () => {
+        commentRow.remove();
+    });
+
+    let editButton = buttonFactory("Edit", () => {
+        insertCommentForm(commentRow, p.innerHTML);
+        commentRow.remove();
+    });
+
+    commentRow.appendChild(document.createElement("td"));
+    commentRow.appendChild(p);
+    commentRow.appendChild(deleteButton);
+    commentRow.appendChild(editButton);
+
+    insertAfter(commentRow, row);
+}
+
 
 function buttonFactory(label, clickhandler) {
     let button = document.createElement("button");
@@ -82,6 +100,7 @@ function buttonFactory(label, clickhandler) {
     button.addEventListener("click", clickhandler);
     return button;
 }
+
 
 /* Courtesy of https://stackoverflow.com/questions/4793604/ */
 function insertAfter(newNode, referenceNode) {
