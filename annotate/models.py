@@ -45,14 +45,19 @@ class ProjectFile(models.Model):
 
 
 class Comment(models.Model):
-    created = models.DateField(auto_now_add=True)
-    last_updated = models.DateField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
     text = models.TextField()
     projectfile = models.ForeignKey(ProjectFile, on_delete=models.CASCADE)
     lineno = models.IntegerField()
 
     def to_json(self):
-        return {'text': self.text, 'lineno': self.lineno}
+        return {
+            'created': self.created.strftime('%c'),
+            'last_updated': self.last_updated.strftime('%c'),
+            'lineno': self.lineno,
+            'text': self.text,
+        }
 
     def __str__(self):
         return 'Comment on {0.projectfile}, line {0.lineno}'.format(self)

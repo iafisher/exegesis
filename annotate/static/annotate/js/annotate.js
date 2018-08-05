@@ -1,3 +1,13 @@
+/**
+ * The JavaScript code to insert, edit and delete comments.
+ *
+ * It's a bit of a mess, but unfortunately I think a clean framework like React
+ * would be difficult to integrate with the syntax highlighting library.
+ *
+ * Author:  Ian Fisher (iafisher@protonmail.com)
+ * Version: August 2018
+ */
+
 "use strict";
 
 // Call the onload function when the document is ready.
@@ -13,31 +23,43 @@ hljs.initLineNumbersOnLoad();
 
 
 function onload() {
-    // Wait a short amount of time for line-number initialization to finish.
-    setTimeout(attachListeners, 500);
+    // We want to pass the timeout ID to the interval function, so it can
+    // detach itself as soon as it succeeds in attaching the listener. But
+    // we don't get the timeout ID until setInterval returns, so we have to use
+    // this hack.
+    let data = {};
+    let timeoutID = setInterval(tryToAttachListeners, 100, data);
+    data.timeoutID = timeoutID;
 }
 
 
-function attachListeners() {
+function tryToAttachListeners(data) {
     let lineNumbers = document.querySelectorAll(".hljs-ln-code");
+    if (lineNumbers.length !== 0) {
+        for (let item of lineNumbers) {
+            item.addEventListener("click", () => {
+                let nextRow = item.parentNode.nextElementSibling;
+                if (nextRow === null || !nextRow.classList.contains("comment-row")) {
+                    insertCommentForm(item.parentNode, "");
+                }
+            });
+        }
 
-    for (let item of lineNumbers) {
-        item.addEventListener("click", () => {
-            let nextRow = item.parentNode.nextElementSibling;
-            if (nextRow === null || !nextRow.classList.contains("comment-row")) {
-                insertCommentForm(item.parentNode, "");
-            }
-        });
-    }
+        let insertCount = 0;
+        // comments is a global variable defined in an inline script in
+        // projectfile.html. Its value ultimately comes from the back-end database
+        // by way of Django.
+        //
+        // Gross, I know.
+        for (let comment of comments) {
+            let row = document.querySelector("tr:nth-child(" + (comment.lineno + insertCount) + ")");
+            insertSavedComment(row, comment.text, comment.created,
+                comment.last_updated);
+            insertCount++;
+        }
 
-    let insertCount = 0;
-    // comments is a global variable defined in an inline script in
-    // projectfile.html. Its value ultimately comes from the back-end database
-    // by way of Django.
-    for (let comment of comments) {
-        let row = document.querySelector("tr:nth-child(" + (comment.lineno + insertCount) + ")");
-        insertSavedComment(row, comment.text);
-        insertCount++;
+        // Remove this interval function.
+        window.clearInterval(data.timeoutID);
     }
 }
 
@@ -87,13 +109,24 @@ function insertCommentForm(row, text) {
 /**
  * Insert a comment after `row`.
  */
-function insertSavedComment(row, text) {
+function insertSavedComment(row, text, created, lastUpdated) {
     let commentRow = document.createElement("tr");
     commentRow.classList.add("comment-row");
 
-    let p = document.createElement("p");
-    p.classList.add("comment");
-    p.innerHTML = text;
+    let p1 = document.createElement("p");
+    p1.classList.add("comment");
+    p1.appendChild(document.createTextNode(text));
+
+    let p2 = document.createElement("p");
+    p2.classList.add("comment");
+    let timestampText;
+    if (created === lastUpdated) {
+        timestampText = "Created at " + created;
+    } else {
+        timestampText = "Created at " + created + ", last updated at "
+            + lastUpdated;
+    }
+    p2.appendChild(document.createTextNode(timestampText));
 
     let deleteButton = buttonFactory("Delete", () => {
         deleteCommentFromDatabase(row);
@@ -101,14 +134,19 @@ function insertSavedComment(row, text) {
     });
 
     let editButton = buttonFactory("Edit", () => {
-        insertCommentForm(row, p.innerHTML);
+        insertCommentForm(row, p1.innerHTML);
         commentRow.remove();
     });
 
+    let pData = document.createElement("td");
+    pData.classList.add("comment-data");
+    pData.appendChild(p1);
+    pData.appendChild(p2);
+    pData.appendChild(deleteButton);
+    pData.appendChild(editButton);
+
     commentRow.appendChild(document.createElement("td"));
-    commentRow.appendChild(p);
-    commentRow.appendChild(deleteButton);
-    commentRow.appendChild(editButton);
+    commentRow.appendChild(pData);
 
     insertAfter(commentRow, row);
 }

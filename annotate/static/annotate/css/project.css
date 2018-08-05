@@ -21,6 +21,16 @@ code {
     line-height: 1.5;
 }
 
+td.comment-data {
+    border: 1px solid gray;
+    background-color: white;
+    padding-left: 10px;
+}
+
+.comment-data button {
+    float: right;
+}
+
 textarea.comment {
     width: 400px;
     height: 100px;
