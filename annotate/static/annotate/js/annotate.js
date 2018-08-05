@@ -19,7 +19,7 @@ if (document.readyState === "complete" || (document.readyState !== "loading" &&
 }
 
 hljs.initHighlightingOnLoad();
-hljs.initLineNumbersOnLoad();
+//hljs.initLineNumbersOnLoad();
 
 
 function onload() {

@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
 
@@ -50,6 +51,7 @@ class Comment(models.Model):
     text = models.TextField()
     projectfile = models.ForeignKey(ProjectFile, on_delete=models.CASCADE)
     lineno = models.IntegerField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def to_json(self):
         return {

@@ -1,6 +1,9 @@
 import json
 from collections import defaultdict
 
+from django.contrib import auth
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -9,6 +12,7 @@ from .forms import ImportProjectForm
 from .models import Comment, Project, ProjectFile
 
 
+@login_required
 def index(request, success=None):
     projects = Project.objects.all()
 
@@ -28,6 +32,7 @@ def index(request, success=None):
     return render(request, 'annotate/index.html', context)
 
 
+@login_required
 def project(request, title):
     proj = get_object_or_404(Project, title=title)
     eligible = [f for f in proj.projectfile_set.order_by('name')
@@ -42,6 +47,7 @@ def project(request, title):
     return render(request, 'annotate/projectdir.html', context)
 
 
+@login_required
 def projectfile_or_dir(request, title, path):
     proj = get_object_or_404(Project, title=title)
     pfile = get_object_or_404(ProjectFile, project=proj, name=path)
@@ -51,6 +57,7 @@ def projectfile_or_dir(request, title, path):
         return projectfile(request, proj, pfile)
 
 
+@login_required
 def projectdir(request, proj, pfile):
     eligible = proj.projectfile_set.filter(name__startswith=pfile.name + '/')
     directories = [f for f in eligible if f.filetype == ProjectFile.DIRECTORY]
@@ -64,6 +71,7 @@ def projectdir(request, proj, pfile):
     return render(request, 'annotate/projectdir.html', context)
 
 
+@login_required
 def projectfile(request, proj, pfile):
     if not pfile.downloaded:
         contents = download_from_github(pfile.download_source)
@@ -81,6 +89,7 @@ def projectfile(request, proj, pfile):
     return render(request, 'annotate/projectfile.html', context)
 
 
+@login_required
 def update_comment(request, title, path):
     proj = get_object_or_404(Project, title=title)
     pfile = get_object_or_404(ProjectFile, project=proj, name=path)
@@ -98,6 +107,7 @@ def update_comment(request, title, path):
         return redirect('annotate:projectfile', title=title, path=path)
 
 
+@login_required
 def delete_comment(request, title, path):
     proj = get_object_or_404(Project, title=title)
     pfile = get_object_or_404(ProjectFile, project=proj, name=path)
@@ -112,6 +122,7 @@ def delete_comment(request, title, path):
         return redirect('annotate:projectfile', title=title, path=path)
 
 
+@login_required
 def import_project(request):
     if request.method == 'POST':
         form = ImportProjectForm(request.POST)
@@ -123,3 +134,32 @@ def import_project(request):
             return redirect('annotate:failure')
     else:
         return redirect('annotate:index')
+
+
+def login(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = auth.authenticate(request, username=username, password=password)
+        if user is not None:
+            auth.login(request, user)
+            return redirect(request.POST['next'] or '/')
+        else:
+            blank_form = AuthenticationForm()
+            context = {
+                'form': blank_form,
+                'errormsg': 'Invalid username or password',
+            }
+            return render(request, 'annotate/login.html', context)
+    else:
+        form = AuthenticationForm()
+        context = {
+            'form': form,
+            'next': request.GET.get('next')
+        }
+        return render(request, 'annotate/login.html', context)
+
+
+def logout(request):
+    auth.logout(request)
+    return redirect('annotate:login')

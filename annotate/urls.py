@@ -19,4 +19,8 @@ urlpatterns = [
         name='projectfile'),
 
     path('import', views.import_project, name='import_project'),
+
+    path('login', views.login, name='login'),
+    path('login/', views.login),
+    path('logout', views.logout, name='logout'),
 ]
