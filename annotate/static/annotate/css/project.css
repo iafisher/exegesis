@@ -8,11 +8,16 @@ ul {
     line-height: 1.5;
 }
 
-.hljs-ln td {
+td.line-number {
     padding-right: 15px;
+    border-right: 1px solid lightgray;
 }
 
-.hljs-ln-code:hover {
+td.code-line {
+    padding-left: 10px;
+}
+
+tr:hover {
     background-color: lightgray;
 }
 

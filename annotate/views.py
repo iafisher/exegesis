@@ -98,7 +98,7 @@ def update_comment(request, title, path):
         text = obj['text']
         lineno = obj['lineno']
         comment, _ = Comment.objects.get_or_create(
-            lineno=lineno, projectfile=pfile
+            lineno=lineno, projectfile=pfile, user=request.user,
         )
         comment.text = text
         comment.save()
@@ -115,7 +115,7 @@ def delete_comment(request, title, path):
         obj = json.loads(request.body.decode('utf-8'))
         lineno = obj['lineno']
         comment = get_object_or_404(Comment, lineno=lineno,
-            projectfile=pfile)
+            projectfile=pfile, user=request.user)
         comment.delete()
         return HttpResponse()
     else:
