@@ -53,10 +53,12 @@ function onload() {
 
     let insertCount = 0;
     // comments is a global variable defined in an inline script in
-    // projectfile.html. Its value ultimately comes from the back-end database
-    // by way of Django.
+    // snippet.html. Its value ultimately comes from the back-end database by
+    // way of Django.
     //
     // Gross, I know.
+    //
+    // TODO: Replace this with an API call to the back-end.
     for (let comment of comments) {
         newComment(comment.lineno, comment.text, comment.created,
             comment.last_updated);

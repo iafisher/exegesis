@@ -38,7 +38,7 @@ class ProjectFile(models.Model):
             'title': self.project.title,
             'path': self.name,
         }
-        return reverse('annotate:projectfile', kwargs=kwargs)
+        return reverse('annotate:path', kwargs=kwargs)
 
     def __str__(self):
         suffix = '/' if self.filetype == self.DIRECTORY else ''

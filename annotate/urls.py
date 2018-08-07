@@ -15,8 +15,7 @@ urlpatterns = [
         name='delete'),
 
     path('project/<title>', views.project, name='project'),
-    path('project/<title>/<path:path>', views.projectfile_or_dir,
-        name='projectfile'),
+    path('project/<title>/<path:path>', views.path, name='path'),
 
     path('import', views.import_project, name='import_project'),
 

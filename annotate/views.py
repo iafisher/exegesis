@@ -44,21 +44,21 @@ def project(request, title):
         'directories': directories,
         'files': files,
     }
-    return render(request, 'annotate/projectdir.html', context)
+    return render(request, 'annotate/direntry.html', context)
 
 
 @login_required
-def projectfile_or_dir(request, title, path):
+def path(request, title, path):
     proj = get_object_or_404(Project, title=title)
     pfile = get_object_or_404(ProjectFile, project=proj, name=path)
     if pfile.filetype == ProjectFile.DIRECTORY:
-        return projectdir(request, proj, pfile)
+        return direntry(request, proj, pfile)
     else:
-        return projectfile(request, proj, pfile)
+        return snippet(request, proj, pfile)
 
 
 @login_required
-def projectdir(request, proj, pfile):
+def direntry(request, proj, pfile):
     eligible = proj.projectfile_set.filter(name__startswith=pfile.name + '/')
     directories = [f for f in eligible if f.filetype == ProjectFile.DIRECTORY]
     files = [f for f in eligible if f.filetype == ProjectFile.REGULAR_FILE]
@@ -68,11 +68,11 @@ def projectdir(request, proj, pfile):
         'directories': directories,
         'files': files,
     }
-    return render(request, 'annotate/projectdir.html', context)
+    return render(request, 'annotate/direntry.html', context)
 
 
 @login_required
-def projectfile(request, proj, pfile):
+def snippet(request, proj, pfile):
     if not pfile.downloaded:
         contents = download_from_github(pfile.download_source)
         if contents:
@@ -86,7 +86,7 @@ def projectfile(request, proj, pfile):
         'comments_json': json.dumps([c.to_json() for c in comments]),
         'path_json': json.dumps(pfile.get_absolute_url()),
     }
-    return render(request, 'annotate/projectfile.html', context)
+    return render(request, 'annotate/snippet.html', context)
 
 
 @login_required
@@ -104,7 +104,7 @@ def update_comment(request, title, path):
         comment.save()
         return HttpResponse()
     else:
-        return redirect('annotate:projectfile', title=title, path=path)
+        return redirect('annotate:path', title=title, path=path)
 
 
 @login_required
@@ -119,7 +119,7 @@ def delete_comment(request, title, path):
         comment.delete()
         return HttpResponse()
     else:
-        return redirect('annotate:projectfile', title=title, path=path)
+        return redirect('annotate:path', title=title, path=path)
 
 
 @login_required
