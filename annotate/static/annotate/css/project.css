@@ -17,7 +17,7 @@ td.code-line {
     padding-left: 10px;
 }
 
-tr:hover {
+.code-row:hover {
     background-color: lightgray;
 }
 
@@ -26,23 +26,34 @@ code {
     line-height: 1.5;
 }
 
-td.comment-data {
+.comment-row td:nth-child(2) {
     border: 1px solid gray;
     background-color: white;
     padding-left: 10px;
 }
 
-.comment-data button {
+.comment-row button {
     float: right;
 }
 
-textarea.comment {
+.comment-row button.show-button {
+    float: left;
+    margin: 10px 0;
+}
+
+.comment-row textarea {
     width: 400px;
     height: 100px;
 }
 
-.comment {
+.comment-row p, .comment-row textarea {
     font-size: 14px;
     line-height: 1.5;
     font-family: sans-serif;
+}
+
+table {
+    background-color: whitesmoke;
+    width: 1110px;
+    padding: 5px;
 }

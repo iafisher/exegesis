@@ -28,6 +28,7 @@ function onload() {
     for (let i = 0; i < lines.length; i++) {
         let trow = document.createElement("tr");
         trow.id = "line-" + (i + 1);
+        trow.classList.add("code-row");
         trow.addEventListener("click", event => {
             let nextRow = event.target.parentNode.nextElementSibling;
             if (nextRow === null || !nextRow.classList.contains("comment-row")) {
@@ -60,10 +61,21 @@ function onload() {
     //
     // TODO: Replace this with an API call to the back-end.
     for (let comment of comments) {
-        renderComment(comment.lineno, comment.user, comment.text,
-            comment.created, comment.last_updated);
+        renderComment(new Comment(comment.lineno, comment.user, comment.text,
+            comment.created, comment.last_updated));
         insertCount++;
     }
+}
+
+
+function Comment(lineno, creator, text, created, lastUpdated) {
+    return {
+        lineno: lineno,
+        creator: creator,
+        text: text,
+        created: created,
+        lastUpdated: lastUpdated,
+    };
 }
 
 
@@ -84,13 +96,14 @@ function renderNewForm(lineno) {
         if (text.length > 0) {
             saveCommentToDatabase(lineno, text);
             let now = formatDate(new Date());
-            renderComment(lineno, user, text, now, now);
+            renderComment(new Comment(lineno, user, text, now, now));
         }
         commentRow.remove()
     });
 
     commentRow.appendChild(document.createElement("td"));
     commentRow.appendChild(tableData);
+    tableData.appendChild(P("Commenting as: " + user));
     tableData.appendChild(textarea);
     tableData.appendChild(cancelButton);
     tableData.appendChild(saveButton);
@@ -99,85 +112,105 @@ function renderNewForm(lineno) {
 }
 
 
-function renderComment(lineno, creator, text, created, lastUpdated) {
-    let commentRow = document.createElement("tr");
-    commentRow.classList.add("comment-row");
-
-    let p1 = document.createElement("p");
-    p1.classList.add("comment");
-    p1.appendChild(document.createTextNode(text));
-
-    let p2 = document.createElement("p");
-    p2.classList.add("comment");
-    p2.appendChild(P("Created on " + created + " by " + creator));
-    if (created !== lastUpdated) {
-        p2.appendChild(P("Last updated on " + lastUpdated));
-    }
+function renderComment(comment) {
+    let commentRow = commentRowFactory();
 
     let deleteButton = buttonFactory("Delete", () => {
-        commentRow.remove();
-        deleteCommentFromDatabase(lineno);
+        if (window.confirm("Are you sure you want to delete this comment?")) {
+            commentRow.remove();
+            deleteCommentFromDatabase(comment.lineno);
+        }
     });
 
     let editButton = buttonFactory("Edit", () => {
         commentRow.remove();
-        renderEditForm(lineno, creator, text, created, lastUpdated);
+        renderEditForm(comment);
     });
 
-    let pData = document.createElement("td");
-    pData.classList.add("comment-data");
-    pData.appendChild(p1);
-    pData.appendChild(document.createElement("hr"));
-    pData.appendChild(p2);
-    pData.appendChild(deleteButton);
-    pData.appendChild(editButton);
+    let hideButton = buttonFactory("Hide", () => {
+        commentRow.remove();
+        renderHiddenComment(comment);
+    });
 
-    commentRow.appendChild(document.createElement("td"));
-    commentRow.appendChild(pData);
+    let td = document.createElement("td");
+    td.appendChild(P(comment.text));
+    td.appendChild(document.createElement("hr"));
+    td.appendChild(P("Created on " + comment.created + " by " + comment.creator));
+    if (comment.created !== comment.lastUpdated) {
+        td.appendChild(P("Last updated on " + comment.lastUpdated));
+    }
+    td.appendChild(deleteButton);
+    td.appendChild(editButton);
+    td.appendChild(hideButton);
+    commentRow.appendChild(td);
 
-    insertAfter(lineno, commentRow);
+    insertAfter(comment.lineno, commentRow);
 }
 
 
-function renderEditForm(lineno, creator, text, created, lastUpdated) {
+function renderHiddenComment(comment) {
+    let commentRow = commentRowFactory();
+
+    let showButton = buttonFactory("Show hidden comment", () => {
+        commentRow.remove();
+        renderComment(comment);
+    });
+    showButton.classList.add("show-button")
+
+    let td = document.createElement("td");
+    td.appendChild(showButton);
+    commentRow.appendChild(td);
+
+    insertAfter(comment.lineno, commentRow);
+}
+
+
+function renderEditForm(comment) {
     let textarea = document.createElement("textarea");
     textarea.classList.add("comment");
-    textarea.value = text;
+    textarea.value = comment.text;
 
-    let tableData = document.createElement("td");
-    let commentRow = document.createElement("tr");
-    commentRow.classList.add("comment-row");
+    let commentRow = commentRowFactory();
 
     let cancelButton = buttonFactory("Cancel", () => {
         commentRow.remove();
-        renderComment(lineno, creator, text, created, lastUpdated);
+        renderComment(comment);
     })
 
     let saveButton = buttonFactory("Save", () => {
         let newText = textarea.value.trim();
         if (newText.length > 0) {
-            if (newText !== text) {
-                saveCommentToDatabase(lineno, newText);
-                renderComment(lineno, creator, newText, created,
-                    formatDate(new Date()));
+            if (newText !== comment.text) {
+                saveCommentToDatabase(comment.lineno, newText);
+                comment.text = newText;
+                comment.lastUpdated = formatDate(new Date());
+                renderComment(comment);
             } else {
-                renderComment(lineno, creator, newText, created, lastUpdated);
+                renderComment(comment);
             }
         } else {
-            deleteCommentFromDatabase(lineno);
+            deleteCommentFromDatabase(comment.lineno);
         }
         commentRow.remove();
     });
 
-    commentRow.appendChild(document.createElement("td"));
-    commentRow.appendChild(tableData);
-    tableData.appendChild(textarea);
-    tableData.appendChild(cancelButton);
-    tableData.appendChild(saveButton);
+    let td = document.createElement("td");
+    td.appendChild(P("Commenting as: " + user));
+    td.appendChild(textarea);
+    td.appendChild(cancelButton);
+    td.appendChild(saveButton);
+    commentRow.appendChild(td);
 
-    insertAfter(lineno, commentRow);
+    insertAfter(comment.lineno, commentRow);
 }
 
+
+function commentRowFactory() {
+    let commentRow = document.createElement("tr");
+    commentRow.classList.add("comment-row");
+    commentRow.appendChild(document.createElement("td"));
+    return commentRow;
+}
 
 
 function saveCommentToDatabase(lineno, text) {
