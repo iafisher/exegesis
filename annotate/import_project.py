@@ -2,7 +2,7 @@ import base64
 
 import requests
 
-from .models import Project, ProjectFile
+from .models import Directory, Project, Snippet, get_from_path
 
 
 def download_from_github(url):
@@ -26,14 +26,24 @@ def import_from_github(username, repo, commit_hash):
     r = requests.get(url, headers=headers)
     if r.status_code == 200:
         response = r.json()
-        project = Project(title='github:{}:{}'.format(username, repo))
+        project = Project(name='github:{}:{}'.format(username, repo))
         project.save()
         for entry in response['tree']:
-            ftype = ProjectFile.DIRECTORY if entry['type'] == 'tree' else \
-                    ProjectFile.REGULAR_FILE
-            projectfile = ProjectFile(project=project, name=entry['path'],
-                downloaded=False, download_source=entry['url'], filetype=ftype)
-            projectfile.save()
+            last_slash = entry['path'].rfind('/')
+            if last_slash == -1:
+                parent = None
+                name = entry['path']
+            else:
+                parent = get_from_path(project, entry['path'][:last_slash])
+                name = entry['path'][last_slash+1:]
+
+            if entry['type'] == 'tree':
+                Directory.objects.create(project=project, name=name,
+                    parent=parent)
+            else:
+                Snippet.objects.create(project=project, name=name,
+                    parent=parent, downloaded=False,
+                    download_source=entry['url'])
         return True
     else:
         return False

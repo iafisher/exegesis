@@ -29,8 +29,8 @@ var user = {{ user }};
 {% block content %}
 <div class="container">
   <p><a href="/">Home</a></p>
-  <h2><a href="{{ file.project.get_absolute_url }}">{{ file.project }}</a>/{{ file.name }}</h2>
+  <h2><a href="{{ snippet.project.get_absolute_url }}">{{ snippet.project }}</a>/{{ snippet.name }}</h2>
   <p>Click on a line to add a comment.</p>
-  <pre class="line-numbers"><code id="snippet">{{ file.text }}</code></pre>
+  <pre class="line-numbers"><code id="snippet">{{ snippet.text }}</code></pre>
 </div>
 {% endblock %}

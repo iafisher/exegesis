@@ -9,13 +9,13 @@ urlpatterns = [
     path('success', views.index, {'success': True}, name='success'),
     path('failure', views.index, {'success': False}, name='failure'),
 
-    path('project/<title>/<path:path>/update', views.update_comment,
+    path('project/<name>/<path:path>/update', views.update_comment,
         name='update'),
-    path('project/<title>/<path:path>/delete', views.delete_comment,
+    path('project/<name>/<path:path>/delete', views.delete_comment,
         name='delete'),
 
-    path('project/<title>', views.project, name='project'),
-    path('project/<title>/<path:path>', views.path, name='path'),
+    path('project/<name>', views.project_index, name='project_index'),
+    path('project/<name>/<path:path>', views.path, name='path'),
 
     path('import', views.import_project, name='import_project'),
 

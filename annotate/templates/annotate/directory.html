@@ -11,7 +11,7 @@
 {% block content %}
 <div class="container">
   <p><a href="/">Home</a></p>
-  <h2><a href="{{ project.get_absolute_url }}">{{ project.title }}</a>/{{ dir.name }}</h2>
+  <h2><a href="{{ project.get_absolute_url }}">{{ project.name }}</a>/{{ dir.name }}</h2>
   <ul>
     {% for directory in directories %}
     <li>
@@ -19,13 +19,13 @@
       <a href="{{ directory.get_absolute_url }}">{{ directory.name }}</a>
     </li>
     {% endfor %}
-    {% for file in files %}
+    {% for snippet in snippets %}
     <li>
       <i class="fi-page"></i>
-      <a href="{{ file.get_absolute_url }}">
-        {{ file.name }}
-        {% if file.comment_set.all|length != 0 %}
-        ({{ file.comment_set.all|length }} comment{{ file.comment_set.all|length|pluralize }})
+      <a href="{{ snippet.get_absolute_url }}">
+        {{ snippet.name }}
+        {% if snippet.comment_set.all|length != 0 %}
+        ({{ snippet.comment_set.all|length }} comment{{ snippet.comment_set.all|length|pluralize }})
         {% endif %}
       </a>
     </li>

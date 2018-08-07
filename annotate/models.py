@@ -1,55 +1,72 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.http import Http404
 from django.urls import reverse
 
 
 class Project(models.Model):
+    name = models.CharField(max_length=256)
     imported = models.DateField(auto_now_add=True)
-    title = models.CharField(max_length=100)
 
     def get_absolute_url(self):
-        return reverse('annotate:project', kwargs={'title': self.title})
+        return reverse('annotate:project_index', kwargs={'name': self.name})
 
     def __str__(self):
-        return self.title
+        return self.name
 
 
-class ProjectFile(models.Model):
+class Directory(models.Model):
+    name = models.CharField(max_length=256)
+    parent = models.ForeignKey('Directory', on_delete=models.CASCADE,
+        null=True, blank=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100)
+
+    def get_absolute_url(self):
+        if self.parent:
+            return self.parent.get_absolute_url() + '/' + self.name
+        else:
+            return self.project.get_absolute_url() + '/' + self.name
+
+    def __str__(self):
+        if self.parent:
+            return '{0.parent}{0.name}/'.format(self)
+        else:
+            return '{0.project}:{0.name}/'.format(self)
+
+    class Meta:
+        verbose_name_plural = 'directories'
+
+
+class Snippet(models.Model):
+    name = models.CharField(max_length=256)
     text = models.TextField(blank=True)
+    parent = models.ForeignKey(Directory, on_delete=models.CASCADE, null=True,
+        blank=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
     # If downloaded is False, then download_source contains the URL from which
     # the contents of the file can be downloaded.
     downloaded = models.BooleanField()
     download_source = models.URLField(blank=True)
 
-    REGULAR_FILE = 'f'
-    DIRECTORY = 'd'
-    FILETYPE_CHOICES = (
-        (REGULAR_FILE, 'file'),
-        (DIRECTORY, 'directory'),
-    )
-    filetype = models.CharField(max_length=1, choices=FILETYPE_CHOICES,
-        default=REGULAR_FILE)
-
     def get_absolute_url(self):
-        kwargs = {
-            'title': self.project.title,
-            'path': self.name,
-        }
-        return reverse('annotate:path', kwargs=kwargs)
+        if self.parent:
+            return self.parent.get_absolute_url() + '/' + self.name
+        else:
+            return self.project.get_absolute_url() + '/' + self.name
 
     def __str__(self):
-        suffix = '/' if self.filetype == self.DIRECTORY else ''
-        return str(self.project) + '/' + self.name + suffix
+        if self.parent:
+            return '{0.parent}{0.name}'.format(self)
+        else:
+            return '{0.project}:{0.name}'.format(self)
 
 
 class Comment(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
     text = models.TextField()
-    projectfile = models.ForeignKey(ProjectFile, on_delete=models.CASCADE)
+    snippet = models.ForeignKey(Snippet, on_delete=models.CASCADE)
     lineno = models.IntegerField()
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -63,7 +80,27 @@ class Comment(models.Model):
         }
 
     def __str__(self):
-        return 'Comment on {0.projectfile}, line {0.lineno}'.format(self)
+        return 'Comment on {0.snippet}, line {0.lineno}'.format(self)
+
+
+def get_from_path(project, path):
+    *path_components, pathentry = path.split('/')
+    parent = None
+    for component in path_components:
+        try:
+            parent = Directory.objects.get(project=project, parent=parent,
+                name=component)
+        except Directory.DoesNotExist:
+            raise Http404('No Directory matches the given query.')
+    try:
+        return Snippet.objects.get(project=project, parent=parent,
+            name=pathentry)
+    except Snippet.DoesNotExist:
+        try:
+            return Directory.objects.get(project=project, parent=parent,
+                name=pathentry)
+        except Directory.DoesNotExist:
+            raise Http404('No Directory matches the given query.')
 
 
 def format_date(date):

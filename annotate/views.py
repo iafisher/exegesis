@@ -4,12 +4,12 @@ from collections import defaultdict
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .import_project import download_from_github, import_from_github
 from .forms import ImportProjectForm
-from .models import Comment, Project, ProjectFile
+from .models import Comment, Directory, Project, Snippet, get_from_path
 
 
 @login_required
@@ -19,10 +19,10 @@ def index(request, success=None):
     # Calculate the number of comments on each project.
     comment_count = defaultdict(int)
     for comment in Comment.objects.all():
-        comment_count[comment.projectfile.project.title] += 1
+        comment_count[comment.snippet.project.name] += 1
 
     for project in projects:
-        project.comment_count = comment_count[project.title]
+        project.comment_count = comment_count[project.name]
 
     context = {
         'projects': projects,
@@ -33,94 +33,99 @@ def index(request, success=None):
 
 
 @login_required
-def project(request, title):
-    proj = get_object_or_404(Project, title=title)
-    eligible = [f for f in proj.projectfile_set.order_by('name')
-        if '/' not in f.name[:-1]]
-    directories = [f for f in eligible if f.filetype == ProjectFile.DIRECTORY]
-    files = [f for f in eligible if f.filetype == ProjectFile.REGULAR_FILE]
+def project_index(request, name):
+    project = get_object_or_404(Project, name=name)
+    directories = project.directory_set.filter(project=project, parent=None) \
+        .order_by('name')
+    snippets = project.snippet_set.filter(project=project, parent=None) \
+        .order_by('name')
     context = {
-        'project': proj,
+        'project': project,
         'directories': directories,
-        'files': files,
+        'snippets': snippets,
     }
-    return render(request, 'annotate/direntry.html', context)
+    return render(request, 'annotate/directory.html', context)
 
 
 @login_required
-def path(request, title, path):
-    proj = get_object_or_404(Project, title=title)
-    pfile = get_object_or_404(ProjectFile, project=proj, name=path)
-    if pfile.filetype == ProjectFile.DIRECTORY:
-        return direntry(request, proj, pfile)
+def path(request, name, path):
+    project = get_object_or_404(Project, name=name)
+    snippet_or_directory = get_from_path(project, path)
+    if isinstance(snippet_or_directory, Snippet):
+        return snippet_index_core(request, project, snippet_or_directory)
     else:
-        return snippet(request, proj, pfile)
+        return directory_index_core(request, project, snippet_or_directory)
 
 
-@login_required
-def direntry(request, proj, pfile):
-    eligible = proj.projectfile_set.filter(name__startswith=pfile.name + '/')
-    directories = [f for f in eligible if f.filetype == ProjectFile.DIRECTORY]
-    files = [f for f in eligible if f.filetype == ProjectFile.REGULAR_FILE]
+def directory_index_core(request, project, directory):
+    directories = Directory.objects.filter(project=project, parent=directory)
+    snippets = Snippet.objects.filter(project=project, parent=directory)
     context = {
-        'project': proj,
-        'dir': pfile,
+        'project': project,
+        'dir': directory,
         'directories': directories,
-        'files': files,
+        'snippets': snippets,
     }
-    return render(request, 'annotate/direntry.html', context)
+    return render(request, 'annotate/directory.html', context)
 
 
 @login_required
-def snippet(request, proj, pfile):
-    if not pfile.downloaded:
-        contents = download_from_github(pfile.download_source)
+def snippet_index_core(request, project, snippet):
+    if not snippet.downloaded:
+        contents = download_from_github(snippet.download_source)
         if contents:
-            pfile.text = contents
-            pfile.downloaded = True
-            pfile.save()
+            snippet.text = contents
+            snippet.downloaded = True
+            snippet.save()
 
-    comments = Comment.objects.filter(projectfile=pfile)
+    comments = Comment.objects.filter(snippet=snippet)
     context = {
-        'file': pfile,
         'comments_json': json.dumps([c.to_json() for c in comments]),
-        'path_json': json.dumps(pfile.get_absolute_url()),
+        'path_json': json.dumps(snippet.get_absolute_url()),
+        'snippet': snippet,
         'user': repr(request.user.username),
     }
     return render(request, 'annotate/snippet.html', context)
 
 
 @login_required
-def update_comment(request, title, path):
-    proj = get_object_or_404(Project, title=title)
-    pfile = get_object_or_404(ProjectFile, project=proj, name=path)
+def update_comment(request, name, path):
+    project = get_object_or_404(Project, name=name)
+    snippet = get_from_path(project, path)
+    if not isinstance(snippet, Snippet):
+        raise Http404('No Snippet matches the given query.')
+
     if request.method == 'POST':
         obj = json.loads(request.body.decode('utf-8'))
         text = obj['text']
         lineno = obj['lineno']
         comment, _ = Comment.objects.get_or_create(
-            lineno=lineno, projectfile=pfile, user=request.user,
+            lineno=lineno, snippet=snippet, user=request.user,
         )
         comment.text = text
         comment.save()
         return HttpResponse()
     else:
-        return redirect('annotate:path', title=title, path=path)
+        return redirect('annotate:path', name=name, path=path)
 
 
 @login_required
-def delete_comment(request, title, path):
-    proj = get_object_or_404(Project, title=title)
-    pfile = get_object_or_404(ProjectFile, project=proj, name=path)
+def delete_comment(request, name, path):
+    project = get_object_or_404(Project, name=name)
+    snippet = get_from_path(project, path)
+    if not isinstance(snippet, Snippet):
+        raise Http404('No Snippet matches the given query.')
+
     if request.method == 'POST':
         obj = json.loads(request.body.decode('utf-8'))
         lineno = obj['lineno']
-        comment = get_object_or_404(Comment, lineno=lineno,
-            projectfile=pfile, user=request.user)
+        comment, _ = Comment.objects.get_or_create(
+            lineno=lineno, snippet=snippet, user=request.user,
+        )
         comment.delete()
         return HttpResponse()
     else:
-        return redirect('annotate:path', title=title, path=path)
+        return redirect('annotate:path', name=name, path=path)
 
 
 @login_required

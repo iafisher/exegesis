@@ -23,7 +23,7 @@
     {% for project in projects %}
     <li>
       <a href="{{ project.get_absolute_url }}">
-        {{ project.title }} ({{ project.comment_count }} comment{{ project.comment_count|pluralize }})
+        {{ project.name }} ({{ project.comment_count }} comment{{ project.comment_count|pluralize }})
       </a>
     </li>
     {% empty %}
