@@ -27,10 +27,11 @@ function onload() {
     table.appendChild(tbody);
     for (let i = 0; i < lines.length; i++) {
         let trow = document.createElement("tr");
+        trow.id = "line-" + (i + 1);
         trow.addEventListener("click", event => {
             let nextRow = event.target.parentNode.nextElementSibling;
             if (nextRow === null || !nextRow.classList.contains("comment-row")) {
-                insertCommentForm(event.target.parentNode, "");
+                renderNewForm(i + 1);
             }
         });
 
@@ -57,44 +58,38 @@ function onload() {
     //
     // Gross, I know.
     for (let comment of comments) {
-        let row = document.querySelector("tr:nth-child(" + (comment.lineno + insertCount) + ")");
-        insertSavedComment(row, comment.text, comment.created,
+        newComment(comment.lineno, comment.text, comment.created,
             comment.last_updated);
         insertCount++;
     }
 }
 
 
-/**
- * Insert a comment form after `row`. The placeholder value of the textarea is
- * initialized to `text`.
- */
-function insertCommentForm(row, text, created, lastUpdated) {
+/* Courtesy of https://stackoverflow.com/questions/4793604/ */
+function insertAfter(newNode, referenceNode) {
+    referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+}
+
+
+function renderNewForm(lineno) {
     let textarea = document.createElement("textarea");
     textarea.classList.add("comment");
-    textarea.value = text;
 
     let tableData = document.createElement("td");
     let commentRow = document.createElement("tr");
     commentRow.classList.add("comment-row");
 
     let cancelButton = buttonFactory("Cancel", () => {
-        if (text.length > 0) {
-            insertSavedComment(row, text, created, lastUpdated);
-        }
         commentRow.remove();
     })
 
     let saveButton = buttonFactory("Save", () => {
         let text = textarea.value.trim();
-
         if (text.length > 0) {
-            saveCommentToDatabase(row, textarea.value);
-            insertSavedComment(row, textarea.value, created, lastUpdated);
-        } else {
-            deleteCommentFromDatabase(row);
+            saveCommentToDatabase(lineno, text);
+            renderComment(lineno, text, "now", "now");
         }
-        commentRow.remove();
+        commentRow.remove()
     });
 
     commentRow.appendChild(document.createElement("td"));
@@ -103,14 +98,12 @@ function insertCommentForm(row, text, created, lastUpdated) {
     tableData.appendChild(cancelButton);
     tableData.appendChild(saveButton);
 
+    let row = document.getElementById("line-" + lineno);
     insertAfter(commentRow, row);
 }
 
 
-/**
- * Insert a comment after `row`.
- */
-function insertSavedComment(row, text, created, lastUpdated) {
+function renderComment(lineno, text, created, lastUpdated) {
     let commentRow = document.createElement("tr");
     commentRow.classList.add("comment-row");
 
@@ -126,13 +119,13 @@ function insertSavedComment(row, text, created, lastUpdated) {
     }
 
     let deleteButton = buttonFactory("Delete", () => {
-        deleteCommentFromDatabase(row);
         commentRow.remove();
+        deleteCommentFromDatabase(lineno);
     });
 
     let editButton = buttonFactory("Edit", () => {
-        insertCommentForm(row, p1.innerHTML, created, lastUpdated);
         commentRow.remove();
+        renderEditForm(lineno, text, created, lastUpdated);
     });
 
     let pData = document.createElement("td");
@@ -146,34 +139,69 @@ function insertSavedComment(row, text, created, lastUpdated) {
     commentRow.appendChild(document.createElement("td"));
     commentRow.appendChild(pData);
 
+    let row = document.getElementById("line-" + lineno);
     insertAfter(commentRow, row);
 }
 
 
-function buttonFactory(label, clickhandler) {
-    let button = document.createElement("button");
-    button.innerHTML = label;
-    button.addEventListener("click", clickhandler);
-    return button;
+function renderEditForm(lineno, text, created, lastUpdated) {
+    let textarea = document.createElement("textarea");
+    textarea.classList.add("comment");
+    textarea.value = text;
+
+    let tableData = document.createElement("td");
+    let commentRow = document.createElement("tr");
+    commentRow.classList.add("comment-row");
+
+    let cancelButton = buttonFactory("Cancel", () => {
+        commentRow.remove();
+        renderComment(lineno, text, created, lastUpdated);
+    })
+
+    let saveButton = buttonFactory("Save", () => {
+        let newText = textarea.value.trim();
+        if (newText.length > 0) {
+            if (newText !== text) {
+                saveCommentToDatabase(lineno, newText);
+                renderComment(lineno, newText, created, "now");
+            } else {
+                renderComment(lineno, newText, created, lastUpdated);
+            }
+        } else {
+            deleteCommentFromDatabase(lineno);
+        }
+        commentRow.remove();
+    });
+
+    commentRow.appendChild(document.createElement("td"));
+    commentRow.appendChild(tableData);
+    tableData.appendChild(textarea);
+    tableData.appendChild(cancelButton);
+    tableData.appendChild(saveButton);
+
+    let row = document.getElementById("line-" + lineno);
+    insertAfter(commentRow, row);
 }
 
 
-function saveCommentToDatabase(row, text) {
-    let lineno = parseInt(row.children[0].textContent);
+
+function saveCommentToDatabase(lineno, text) {
     console.log(text, lineno);
     postData(path + "/update", { text: text, lineno: lineno });
 }
 
 
-function deleteCommentFromDatabase(row) {
-    let lineno = parseInt(row.children[0].textContent);
+function deleteCommentFromDatabase(lineno) {
     postData(path + "/delete", { lineno: lineno });
 }
 
 
+/**
+ * Post the plain object `data` to the given URL.
+ */
 let csrftoken = Cookies.get("csrftoken");
-function postData(path, data) {
-    fetch(path, {
+function postData(url, data) {
+    fetch(url, {
         method: "post",
         headers: {
             "X-CSRFToken": csrftoken,
@@ -182,12 +210,16 @@ function postData(path, data) {
         body: JSON.stringify(data),
         credentials: "include",
     })
+    // TODO: Catch non-200 responses, and display an error message.
     .catch(error => {
         console.error('Fetch error: ', error);
     });
 }
 
 
+/**
+ * Create a new <p> element with the given text content.
+ */
 function P(text) {
     let p = document.createElement("p");
     p.appendChild(document.createTextNode(text));
@@ -195,35 +227,12 @@ function P(text) {
 }
 
 
-/* Courtesy of https://stackoverflow.com/questions/4793604/ */
-function insertAfter(newNode, referenceNode) {
-    referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
-}
-
-
-class RowManager {
-    constructor(parentRow) {
-        this.parentRow = parentRow;
-        this.text = "";
-    }
-
-    renderNew() {
-
-    }
-
-    renderEdit() {
-
-    }
-
-    render() {
-
-    }
-
-    remove() {
-
-    }
-
-    save() {
-
-    }
+/**
+ * Create a new <button> element with the given label and onclick event handler.
+ */
+function buttonFactory(label, clickhandler) {
+    let button = document.createElement("button");
+    button.innerHTML = label;
+    button.addEventListener("click", clickhandler);
+    return button;
 }
