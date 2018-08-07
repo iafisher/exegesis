@@ -85,6 +85,7 @@ def snippet(request, proj, pfile):
         'file': pfile,
         'comments_json': json.dumps([c.to_json() for c in comments]),
         'path_json': json.dumps(pfile.get_absolute_url()),
+        'user': repr(request.user.username),
     }
     return render(request, 'annotate/snippet.html', context)
 

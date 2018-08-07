@@ -60,16 +60,10 @@ function onload() {
     //
     // TODO: Replace this with an API call to the back-end.
     for (let comment of comments) {
-        newComment(comment.lineno, comment.text, comment.created,
-            comment.last_updated);
+        renderComment(comment.lineno, comment.user, comment.text,
+            comment.created, comment.last_updated);
         insertCount++;
     }
-}
-
-
-/* Courtesy of https://stackoverflow.com/questions/4793604/ */
-function insertAfter(newNode, referenceNode) {
-    referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
 }
 
 
@@ -89,7 +83,8 @@ function renderNewForm(lineno) {
         let text = textarea.value.trim();
         if (text.length > 0) {
             saveCommentToDatabase(lineno, text);
-            renderComment(lineno, text, "now", "now");
+            let now = formatDate(new Date());
+            renderComment(lineno, user, text, now, now);
         }
         commentRow.remove()
     });
@@ -100,12 +95,11 @@ function renderNewForm(lineno) {
     tableData.appendChild(cancelButton);
     tableData.appendChild(saveButton);
 
-    let row = document.getElementById("line-" + lineno);
-    insertAfter(commentRow, row);
+    insertAfter(lineno, commentRow);
 }
 
 
-function renderComment(lineno, text, created, lastUpdated) {
+function renderComment(lineno, creator, text, created, lastUpdated) {
     let commentRow = document.createElement("tr");
     commentRow.classList.add("comment-row");
 
@@ -115,9 +109,9 @@ function renderComment(lineno, text, created, lastUpdated) {
 
     let p2 = document.createElement("p");
     p2.classList.add("comment");
-    p2.appendChild(P("Created at " + created));
+    p2.appendChild(P("Created on " + created + " by " + creator));
     if (created !== lastUpdated) {
-        p2.appendChild(P("Last updated at " + lastUpdated));
+        p2.appendChild(P("Last updated on " + lastUpdated));
     }
 
     let deleteButton = buttonFactory("Delete", () => {
@@ -127,7 +121,7 @@ function renderComment(lineno, text, created, lastUpdated) {
 
     let editButton = buttonFactory("Edit", () => {
         commentRow.remove();
-        renderEditForm(lineno, text, created, lastUpdated);
+        renderEditForm(lineno, creator, text, created, lastUpdated);
     });
 
     let pData = document.createElement("td");
@@ -141,12 +135,11 @@ function renderComment(lineno, text, created, lastUpdated) {
     commentRow.appendChild(document.createElement("td"));
     commentRow.appendChild(pData);
 
-    let row = document.getElementById("line-" + lineno);
-    insertAfter(commentRow, row);
+    insertAfter(lineno, commentRow);
 }
 
 
-function renderEditForm(lineno, text, created, lastUpdated) {
+function renderEditForm(lineno, creator, text, created, lastUpdated) {
     let textarea = document.createElement("textarea");
     textarea.classList.add("comment");
     textarea.value = text;
@@ -157,7 +150,7 @@ function renderEditForm(lineno, text, created, lastUpdated) {
 
     let cancelButton = buttonFactory("Cancel", () => {
         commentRow.remove();
-        renderComment(lineno, text, created, lastUpdated);
+        renderComment(lineno, creator, text, created, lastUpdated);
     })
 
     let saveButton = buttonFactory("Save", () => {
@@ -165,9 +158,10 @@ function renderEditForm(lineno, text, created, lastUpdated) {
         if (newText.length > 0) {
             if (newText !== text) {
                 saveCommentToDatabase(lineno, newText);
-                renderComment(lineno, newText, created, "now");
+                renderComment(lineno, creator, newText, created,
+                    formatDate(new Date()));
             } else {
-                renderComment(lineno, newText, created, lastUpdated);
+                renderComment(lineno, creator, newText, created, lastUpdated);
             }
         } else {
             deleteCommentFromDatabase(lineno);
@@ -181,19 +175,19 @@ function renderEditForm(lineno, text, created, lastUpdated) {
     tableData.appendChild(cancelButton);
     tableData.appendChild(saveButton);
 
-    let row = document.getElementById("line-" + lineno);
-    insertAfter(commentRow, row);
+    insertAfter(lineno, commentRow);
 }
 
 
 
 function saveCommentToDatabase(lineno, text) {
-    console.log(text, lineno);
+    // `path` is a global variable defined in snippet.html.
     postData(path + "/update", { text: text, lineno: lineno });
 }
 
 
 function deleteCommentFromDatabase(lineno) {
+    // `path` is a global variable defined in snippet.html.
     postData(path + "/delete", { lineno: lineno });
 }
 
@@ -237,4 +231,39 @@ function buttonFactory(label, clickhandler) {
     button.innerHTML = label;
     button.addEventListener("click", clickhandler);
     return button;
+}
+
+
+/* Courtesy of https://stackoverflow.com/questions/4793604/ */
+function insertAfter(lineno, newNode) {
+    let referenceNode = document.getElementById("line-" + lineno);
+    referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+}
+
+
+'Tuesday 07 August 2018, 10:36 AM'
+function formatDate(date) {
+    return dayNumberToName(date.getUTCDay()) + " " + date.getUTCDate() + " " +
+        monthNumberToName(date.getUTCMonth()) + " " + date.getUTCFullYear() +
+        ", " + pad(date.getUTCHours()) + ":" + pad(date.getUTCMinutes()) +
+        " UTC";
+}
+
+
+function pad(number) {
+    return number >= 10 ? "" + number : "0" + number;
+}
+
+
+const months = ["January", "February", "March", "April", "May", "June", "July",
+    "August", "September", "October", "November", "December"];
+function monthNumberToName(month) {
+    return months[month];
+}
+
+
+const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
+    "Saturday"];
+function dayNumberToName(day) {
+    return days[day];
 }

@@ -55,11 +55,18 @@ class Comment(models.Model):
 
     def to_json(self):
         return {
-            'created': self.created.strftime('%c'),
-            'last_updated': self.last_updated.strftime('%c'),
+            'created': format_date(self.created),
+            'last_updated': format_date(self.last_updated),
             'lineno': self.lineno,
             'text': self.text,
+            'user': self.user.username,
         }
 
     def __str__(self):
         return 'Comment on {0.projectfile}, line {0.lineno}'.format(self)
+
+
+def format_date(date):
+    """Return a string in the form 'Tuesday 7 August 2018, 13:51 UTC'"""
+    return date.strftime('%A ') + \
+        date.strftime('%d %B %Y, %H:%M UTC').lstrip('0')
