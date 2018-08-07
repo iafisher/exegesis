@@ -30,6 +30,7 @@ code {
     border: 1px solid gray;
     background-color: white;
     padding-left: 10px;
+    padding-right: 10px;
 }
 
 .comment-row button {
@@ -42,8 +43,9 @@ code {
 }
 
 .comment-row textarea {
-    width: 400px;
+    width: 100%;
     height: 100px;
+    margin-bottom: 10px;
 }
 
 .comment-row p, .comment-row textarea {

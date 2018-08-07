@@ -132,8 +132,12 @@ function renderComment(comment) {
         renderHiddenComment(comment);
     });
 
+    let converter = new showdown.Converter();
+    let markdownP = document.createElement("p");
+    markdownP.innerHTML = converter.makeHtml(comment.text);
+
     let td = document.createElement("td");
-    td.appendChild(P(comment.text));
+    td.appendChild(markdownP);
     td.appendChild(document.createElement("hr"));
     td.appendChild(P("Created on " + comment.created + " by " + comment.creator));
     if (comment.created !== comment.lastUpdated) {
