@@ -2,13 +2,21 @@
 
 {% block title %}Login | Writing Streak{% endblock %}
 
+{% block extrahead %}
+<style>
+#main-container {
+  padding-top: 10px;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container">
+<div class="container" id="main-container">
   {% if errormsg %}
-  <p>{{ errormsg }}</p>
+  <p id="errormsg">{{ errormsg }}</p>
   {% endif %}
 
-  <form method="post" action="{% url 'annotate:login' %}">
+  <form id="login-form" method="post" action="{% url 'annotate:login' %}">
     {% csrf_token %}
     {{ form.as_p }}
     <input type="hidden" name="next" value="{{ next|default_if_none:"/" }}" />

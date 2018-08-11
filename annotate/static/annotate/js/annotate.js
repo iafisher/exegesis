@@ -143,8 +143,10 @@ function renderComment(comment) {
     if (comment.created !== comment.lastUpdated) {
         td.appendChild(P("Last updated on " + comment.lastUpdated));
     }
-    td.appendChild(deleteButton);
-    td.appendChild(editButton);
+    if (user === comment.creator) {
+        td.appendChild(deleteButton);
+        td.appendChild(editButton);
+    }
     td.appendChild(hideButton);
     commentRow.appendChild(td);
 
@@ -278,7 +280,9 @@ function insertAfter(lineno, newNode) {
 }
 
 
-'Tuesday 07 August 2018, 10:36 AM'
+/**
+ * Format a Date object, e.g. 'Tuesday 07 August 2018, 10:36 AM'
+ */
 function formatDate(date) {
     return dayNumberToName(date.getUTCDay()) + " " + date.getUTCDate() + " " +
         monthNumberToName(date.getUTCMonth()) + " " + date.getUTCFullYear() +
