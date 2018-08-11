@@ -27,6 +27,12 @@ class Directory(models.Model):
         else:
             return self.project.get_absolute_url() + '/' + self.name
 
+    def get_path(self):
+        if self.parent:
+            return self.parent.get_path() + '/' + self.name
+        else:
+            return self.name
+
     def parent_chain(self):
         parents = []
         me = self
@@ -72,6 +78,12 @@ class Snippet(models.Model):
             return self.parent.get_absolute_url() + '/' + self.name
         else:
             return self.project.get_absolute_url() + '/' + self.name
+
+    def get_path(self):
+        if self.parent:
+            return self.parent.get_path() + '/' + self.name
+        else:
+            return self.name
 
     def __str__(self):
         if self.parent:

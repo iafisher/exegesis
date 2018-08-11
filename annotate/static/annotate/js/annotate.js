@@ -233,14 +233,12 @@ function commentRowFactory() {
 
 
 function saveCommentToDatabase(lineno, text) {
-    // `path` is a global variable defined in snippet.html.
-    postData(path + "/update", { text: text, lineno: lineno });
+    postData("/api/update", { text: text, lineno: lineno });
 }
 
 
 function deleteCommentFromDatabase(lineno) {
-    // `path` is a global variable defined in snippet.html.
-    postData(path + "/delete", { lineno: lineno });
+    postData("/api/delete", { lineno: lineno });
 }
 
 
@@ -249,6 +247,9 @@ function deleteCommentFromDatabase(lineno) {
  */
 let csrftoken = Cookies.get("csrftoken");
 function postData(url, data) {
+    // `project` and `path` are global variables defined in snippet.html.
+    data.project = project;
+    data.path = path;
     fetch(url, {
         method: "post",
         headers: {

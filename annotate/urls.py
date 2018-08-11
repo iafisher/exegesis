@@ -9,11 +9,6 @@ urlpatterns = [
     path('success', views.index, {'success': True}, name='success'),
     path('failure', views.index, {'success': False}, name='failure'),
 
-    path('project/<name>/<path:path>/update', views.update_comment,
-        name='update'),
-    path('project/<name>/<path:path>/delete', views.delete_comment,
-        name='delete'),
-
     path('project/<name>', views.project_index, name='project_index'),
     path('project/<name>/<path:path>', views.path, name='path'),
 

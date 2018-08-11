@@ -4,7 +4,6 @@ from collections import defaultdict
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
-from django.http import HttpResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .import_project import download_from_github, import_from_github
@@ -81,50 +80,11 @@ def snippet_index_core(request, project, snippet):
     comments = Comment.objects.filter(snippet=snippet)
     context = {
         'comments_json': json.dumps([c.to_json() for c in comments]),
-        'path_json': json.dumps(snippet.get_absolute_url()),
+        'path_json': json.dumps(snippet.get_path()),
+        'project_json': json.dumps(project.name),
         'snippet': snippet,
     }
     return render(request, 'annotate/snippet.html', context)
-
-
-@login_required
-def update_comment(request, name, path):
-    project = get_object_or_404(Project, name=name)
-    snippet = get_from_path(project, path)
-    if not isinstance(snippet, Snippet):
-        raise Http404('No Snippet matches the given query.')
-
-    if request.method == 'POST':
-        obj = json.loads(request.body.decode('utf-8'))
-        text = obj['text']
-        lineno = obj['lineno']
-        comment, _ = Comment.objects.get_or_create(
-            lineno=lineno, snippet=snippet, user=request.user,
-        )
-        comment.text = text
-        comment.save()
-        return HttpResponse()
-    else:
-        return redirect('annotate:path', name=name, path=path)
-
-
-@login_required
-def delete_comment(request, name, path):
-    project = get_object_or_404(Project, name=name)
-    snippet = get_from_path(project, path)
-    if not isinstance(snippet, Snippet):
-        raise Http404('No Snippet matches the given query.')
-
-    if request.method == 'POST':
-        obj = json.loads(request.body.decode('utf-8'))
-        lineno = obj['lineno']
-        comment, _ = Comment.objects.get_or_create(
-            lineno=lineno, snippet=snippet, user=request.user,
-        )
-        comment.delete()
-        return HttpResponse()
-    else:
-        return redirect('annotate:path', name=name, path=path)
 
 
 @login_required
