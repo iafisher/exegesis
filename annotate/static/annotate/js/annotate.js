@@ -19,12 +19,28 @@ if (document.readyState === "complete" || (document.readyState !== "loading" &&
 }
 
 
+let csrftoken = Cookies.get("csrftoken");
 function onload() {
-    let highlighted = hljs.highlightAuto(document.getElementById("snippet").textContent).value;
+    fetch("/api/fetch?project=" + PROJECT + "&path=" + PATH, {
+        method: "get",
+        headers: {
+            "X-CSRFToken": csrftoken,
+        },
+        credentials: "include",
+    }).then(response => {
+        response.json().then(onFetch);
+    })
+    .catch(error => {
+        console.error('Fetch error: ', error);
+    });
+}
+
+
+function onFetch(data) {
+    let highlighted = hljs.highlightAuto(data["text"]).value;
     let lines = highlighted.split("\n");
-    let table = document.createElement("table");
-    let tbody = document.createElement("tbody");
-    table.appendChild(tbody);
+
+    let tbody = document.getElementById("table-body");
     for (let i = 0; i < lines.length; i++) {
         let trow = document.createElement("tr");
         trow.id = "line-" + (i + 1);
@@ -41,7 +57,7 @@ function onload() {
         td1.classList.add("line-number");
 
         let td2 = document.createElement("td");
-        td2.innerHTML = lines[i];
+        td2.innerHTML = "<pre><code>" + lines[i] + "</code></pre>";
         td2.classList.add("code-line")
 
         trow.appendChild(td1);
@@ -49,18 +65,8 @@ function onload() {
         tbody.appendChild(trow);
     }
 
-    document.getElementById("snippet").innerHTML = "";
-    document.getElementById("snippet").appendChild(table);
-
     let insertCount = 0;
-    // COMMENTS is a global variable defined in an inline script in
-    // snippet.html. Its value ultimately comes from the back-end database by
-    // way of Django.
-    //
-    // Gross, I know.
-    //
-    // TODO: Replace this with an API call to the back-end.
-    for (let comment of COMMENTS) {
+    for (let comment of data["comments"]) {
         renderComment(new Comment(comment.lineno, comment.user, comment.text,
             comment.created, comment.last_updated));
         insertCount++;
@@ -91,7 +97,13 @@ function renderNewForm(lineno) {
     let textarea = document.createElement("textarea");
     textarea.classList.add("comment");
 
-    let tableData = document.createElement("td");
+    let converter = new showdown.Converter({noHeaderId: true});
+    let preview = document.createElement("div");
+    preview.classList.add("preview");
+    textarea.oninput = () => {
+        preview.innerHTML = converter.makeHtml(textarea.value);
+    };
+
     let commentRow = document.createElement("tr");
     commentRow.classList.add("comment-row");
 
@@ -110,9 +122,12 @@ function renderNewForm(lineno) {
     });
 
     commentRow.appendChild(document.createElement("td"));
+
+    let tableData = document.createElement("td");
     commentRow.appendChild(tableData);
     tableData.appendChild(P("Commenting as: " + USER));
     tableData.appendChild(textarea);
+    tableData.appendChild(preview);
     tableData.appendChild(cancelButton);
     tableData.appendChild(saveButton);
 
@@ -245,7 +260,6 @@ function deleteCommentFromDatabase(lineno) {
 /**
  * Post the plain object `data` to the given URL.
  */
-let csrftoken = Cookies.get("csrftoken");
 function postData(url, data) {
     // `PROJECT` and `PATH` are global variables defined in snippet.html.
     data.project = PROJECT;

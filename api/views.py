@@ -66,5 +66,6 @@ def fetch(request):
 
     payload = {
         'comments': [c.to_json() for c in snippet.comment_set.all()],
+        'text': snippet.text,
     }
     return JsonResponse(payload)

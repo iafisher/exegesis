@@ -18,7 +18,6 @@
 {% autoescape off %}
 var PATH = {{ path_json }};
 var PROJECT = {{ project_json }};
-var COMMENTS = {{ comments_json }};
 var USER = "{{ user.username }}";
 {% endautoescape %}
 </script>
@@ -41,6 +40,10 @@ var USER = "{{ user.username }}";
     {{ snippet.name }}
   </h2>
   <p>Click on a line to add a comment.</p>
-  <pre class="line-numbers"><code id="snippet">{{ snippet.text }}</code></pre>
+  <!--<pre class="line-numbers"><code id="snippet">{{ snippet.text }}</code></pre>-->
+  <table>
+    <tbody id="table-body">
+    </tbody>
+  </table>
 </div>
 {% endblock %}
