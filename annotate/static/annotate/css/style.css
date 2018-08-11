@@ -365,6 +365,7 @@ div.container {
   display: inline-block;
   width: 100%;
   text-align: right;
+  font-size: 18px;
 }
 
 #account-menu li {
