@@ -10,7 +10,8 @@
 
 {% block content %}
 <div class="container">
-  <p><a href="/">Home</a></p>
+  {% include 'annotate/accountmenu.html' %}
+
   <h2>
     <a href="{{ project.get_absolute_url }}">{{ project.name }}</a>
     {% for parent in dir.parent_chain %}

@@ -83,7 +83,6 @@ def snippet_index_core(request, project, snippet):
         'comments_json': json.dumps([c.to_json() for c in comments]),
         'path_json': json.dumps(snippet.get_absolute_url()),
         'snippet': snippet,
-        'user': repr(request.user.username),
     }
     return render(request, 'annotate/snippet.html', context)
 

@@ -345,8 +345,33 @@ template {
 /* Custom exegesis settings
    ========================================================================== */
 
+html, body {
+  height: 100%;
+}
+
 div.container {
+    box-sizing: border-box;
     margin: 0 auto;
-    width: 80%;
-    margin-top: 40px;
+    width: 70%;
+    min-height: 100%;
+    padding: 0 20px;
+    padding-bottom: 10px;
+    background-color: gainsboro;
+}
+
+#account-menu {
+  padding: 0;
+  list-style: none;
+  display: inline-block;
+  width: 100%;
+  text-align: right;
+}
+
+#account-menu li {
+  display: inline;
+  margin-left: 20px;
+}
+
+#account-menu li:first {
+  margin-left: 0;
 }
