@@ -53,14 +53,14 @@ function onload() {
     document.getElementById("snippet").appendChild(table);
 
     let insertCount = 0;
-    // comments is a global variable defined in an inline script in
+    // COMMENTS is a global variable defined in an inline script in
     // snippet.html. Its value ultimately comes from the back-end database by
     // way of Django.
     //
     // Gross, I know.
     //
     // TODO: Replace this with an API call to the back-end.
-    for (let comment of comments) {
+    for (let comment of COMMENTS) {
         renderComment(new Comment(comment.lineno, comment.user, comment.text,
             comment.created, comment.last_updated));
         insertCount++;
@@ -104,14 +104,14 @@ function renderNewForm(lineno) {
         if (text.length > 0) {
             saveCommentToDatabase(lineno, text);
             let now = formatDate(new Date());
-            renderComment(new Comment(lineno, user, text, now, now));
+            renderComment(new Comment(lineno, USER, text, now, now));
         }
         commentRow.remove()
     });
 
     commentRow.appendChild(document.createElement("td"));
     commentRow.appendChild(tableData);
-    tableData.appendChild(P("Commenting as: " + user));
+    tableData.appendChild(P("Commenting as: " + USER));
     tableData.appendChild(textarea);
     tableData.appendChild(cancelButton);
     tableData.appendChild(saveButton);
@@ -155,7 +155,7 @@ function renderComment(comment) {
     if (comment.created !== comment.lastUpdated) {
         td.appendChild(P("Last updated on " + comment.lastUpdated));
     }
-    if (user === comment.creator) {
+    if (USER === comment.creator) {
         td.appendChild(deleteButton);
         td.appendChild(editButton);
     }
@@ -214,7 +214,7 @@ function renderEditForm(comment) {
     });
 
     let td = document.createElement("td");
-    td.appendChild(P("Commenting as: " + user));
+    td.appendChild(P("Commenting as: " + USER));
     td.appendChild(textarea);
     td.appendChild(cancelButton);
     td.appendChild(saveButton);
@@ -247,9 +247,9 @@ function deleteCommentFromDatabase(lineno) {
  */
 let csrftoken = Cookies.get("csrftoken");
 function postData(url, data) {
-    // `project` and `path` are global variables defined in snippet.html.
-    data.project = project;
-    data.path = path;
+    // `PROJECT` and `PATH` are global variables defined in snippet.html.
+    data.project = PROJECT;
+    data.path = PATH;
     fetch(url, {
         method: "post",
         headers: {
