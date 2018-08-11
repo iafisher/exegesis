@@ -26,7 +26,8 @@ def import_from_github(username, repo, commit_hash):
     r = requests.get(url, headers=headers)
     if r.status_code == 200:
         response = r.json()
-        project = Project(name='github:{}:{}'.format(username, repo))
+        project = Project(name='{}:{}'.format(username, repo),
+            source=Project.GITHUB)
         project.save()
         for entry in response['tree']:
             last_slash = entry['path'].rfind('/')

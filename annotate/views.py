@@ -1,18 +1,18 @@
 import json
 from collections import defaultdict
 
-from django.contrib import auth
+from django.contrib import auth, messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .import_project import download_from_github, import_from_github
-from .forms import ImportProjectForm
+from .forms import CreateProjectForm, ImportProjectForm
 from .models import Comment, Directory, Project, Snippet, get_from_path
 
 
 @login_required
-def index(request, success=None):
+def index(request):
     projects = Project.objects.all()
 
     # Calculate the number of comments on each project.
@@ -24,9 +24,9 @@ def index(request, success=None):
         project.comment_count = comment_count[project.name]
 
     context = {
+        'create_form': CreateProjectForm(),
+        'import_form': ImportProjectForm(),
         'projects': projects,
-        'form': ImportProjectForm(),
-        'success': success,
     }
     return render(request, 'annotate/index.html', context)
 
@@ -70,7 +70,7 @@ def directory_index_core(request, project, directory):
 
 @login_required
 def snippet_index_core(request, project, snippet):
-    if not snippet.downloaded:
+    if not snippet.downloaded and snippet.project.source == Project.GITHUB:
         contents = download_from_github(snippet.download_source)
         if contents:
             snippet.text = contents
@@ -92,10 +92,38 @@ def import_project(request):
     if request.method == 'POST':
         form = ImportProjectForm(request.POST)
         if form.is_valid():
-            import_from_github(form.cleaned_data['username'],
-                form.cleaned_data['reponame'], form.cleaned_data['sha'])
-            return redirect('annotate:success')
+            try:
+                import_from_github(form.cleaned_data['username'],
+                    form.cleaned_data['reponame'], form.cleaned_data['sha'])
+            except:
+                messages.error(request, 'Failed to import project.')
+                return redirect('annotate:failure')
+            else:
+                messages.success(request, 'Project imported successfully.')
+                return redirect('annotate:index')
         else:
+            messages.error(request, 'Failed to import project.')
+            return redirect('annotate:failure')
+    else:
+        return redirect('annotate:index')
+
+
+@login_required
+def create_project(request):
+    if request.method == 'POST':
+        form = CreateProjectForm(request.POST)
+        if form.is_valid():
+            name = form.cleaned_data['projectname']
+            try:
+                Project.objects.create(name=name, source=Project.CUSTOM)
+            except:
+                messages.error(request, 'Failed to create project.')
+                return redirect('annotate:index')
+            else:
+                messages.success(request, 'Project created successfully.')
+                return redirect('annotate:index')
+        else:
+            messages.error(request, 'Failed to create project.')
             return redirect('annotate:failure')
     else:
         return redirect('annotate:index')

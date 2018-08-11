@@ -5,8 +5,17 @@ from django.urls import reverse
 
 
 class Project(models.Model):
-    name = models.CharField(max_length=256)
+    name = models.CharField(max_length=256, unique=True)
     imported = models.DateField(auto_now_add=True)
+
+    GITHUB = 'GH'
+    CUSTOM = 'CM'
+    SOURCE_CHOICES = (
+        (GITHUB, 'GitHub'),
+        (CUSTOM, 'Custom'),
+    )
+    source = models.CharField(max_length=2, choices=SOURCE_CHOICES,
+        default=CUSTOM)
 
     def get_absolute_url(self):
         return reverse('annotate:project_index', kwargs={'name': self.name})

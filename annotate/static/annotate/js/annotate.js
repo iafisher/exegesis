@@ -2,7 +2,10 @@
  * The JavaScript code to insert, edit and delete comments.
  *
  * It's a bit of a mess, but unfortunately I think a clean framework like React
- * would be difficult to integrate with the syntax highlighting library.
+ * would be difficult to integrate with the syntax highlighting functionality
+ * in an efficient way--I suspect that React would re-render the entire source
+ * code table after every change, which would mean frequently drawing thousands
+ * of lines for some large snippets.
  *
  * Author:  Ian Fisher (iafisher@protonmail.com)
  * Version: August 2018
@@ -36,6 +39,10 @@ function onload() {
 }
 
 
+/**
+ * When the page's data is retrieved, render the snippet as an HTML table with
+ * line numbers, and insert pre-existing comments.
+ */
 function onFetch(data) {
     let highlighted = hljs.highlightAuto(data["text"]).value;
     let lines = highlighted.split("\n");
