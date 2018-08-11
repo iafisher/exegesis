@@ -68,6 +68,14 @@ function onload() {
 }
 
 
+function CommentChain(lineno, head) {
+    return {
+        lineno: lineno,
+        comments: [head],
+    };
+}
+
+
 function Comment(lineno, creator, text, created, lastUpdated) {
     return {
         lineno: lineno,
@@ -132,6 +140,10 @@ function renderComment(comment) {
         renderHiddenComment(comment);
     });
 
+    let replyButton = buttonFactory("Reply", () => {
+        renderNewForm(comment.lineno);
+    });
+
     let converter = new showdown.Converter();
     let markdownP = document.createElement("p");
     markdownP.innerHTML = converter.makeHtml(comment.text);
@@ -148,6 +160,7 @@ function renderComment(comment) {
         td.appendChild(editButton);
     }
     td.appendChild(hideButton);
+    td.appendChild(replyButton);
     commentRow.appendChild(td);
 
     insertAfter(comment.lineno, commentRow);
@@ -275,8 +288,13 @@ function buttonFactory(label, clickhandler) {
 
 /* Courtesy of https://stackoverflow.com/questions/4793604/ */
 function insertAfter(lineno, newNode) {
-    let referenceNode = document.getElementById("line-" + lineno);
-    referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+    let referenceNode = document.getElementById("line-" + (lineno + 1));
+    if (referenceNode !== null) {
+        referenceNode.parentNode.insertBefore(newNode, referenceNode);
+    } else {
+        referenceNode = document.getElementById("line-" + lineno);
+        referenceNode.parentNode.appendChild(newNode);
+    }
 }
 
 

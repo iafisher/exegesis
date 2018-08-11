@@ -86,6 +86,8 @@ class Comment(models.Model):
     text = models.TextField()
     snippet = models.ForeignKey(Snippet, on_delete=models.CASCADE)
     lineno = models.IntegerField()
+    parent = models.ForeignKey('Comment', blank=True, null=True,
+        on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def to_json(self):
