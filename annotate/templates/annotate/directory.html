@@ -2,7 +2,7 @@
 
 {% load static %}
 
-{% block title %}Exegesis | {{ project.title }}/{{ dir.name }}{% endblock %}
+{% block title %}Exegesis | {{ project.name }}/{{ dir.name }}{% endblock %}
 
 {% block extrahead %}
 <link rel="stylesheet" href="{% static 'annotate/css/project.css' %}">
@@ -11,7 +11,15 @@
 {% block content %}
 <div class="container">
   <p><a href="/">Home</a></p>
-  <h2><a href="{{ project.get_absolute_url }}">{{ project.name }}</a>/{{ dir.name }}</h2>
+  <h2>
+    <a href="{{ project.get_absolute_url }}">{{ project.name }}</a>
+    {% for parent in dir.parent_chain %}
+    /
+    <a href="{{ parent.get_absolute_url }}">{{ parent.name }}</a>
+    {% endfor %}
+    /
+    {{ dir.name }}
+  </h2>
   <ul>
     {% for directory in directories %}
     <li>

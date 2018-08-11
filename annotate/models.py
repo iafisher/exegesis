@@ -27,6 +27,15 @@ class Directory(models.Model):
         else:
             return self.project.get_absolute_url() + '/' + self.name
 
+    def parent_chain(self):
+        parents = []
+        me = self
+        while me.parent:
+            parents.append(me.parent)
+            me = me.parent
+        parents.reverse()
+        return parents
+
     def __str__(self):
         if self.parent:
             return '{0.parent}{0.name}/'.format(self)
@@ -48,6 +57,15 @@ class Snippet(models.Model):
     # the contents of the file can be downloaded.
     downloaded = models.BooleanField()
     download_source = models.URLField(blank=True)
+
+    def parent_chain(self):
+        parents = []
+        me = self
+        while me.parent:
+            parents.append(me.parent)
+            me = me.parent
+        parents.reverse()
+        return parents
 
     def get_absolute_url(self):
         if self.parent:
