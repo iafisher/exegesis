@@ -39,16 +39,5 @@
     </table>
     <input id="importButton" type="submit" value="Import"/>
   </form>
-
-  <h2>Create a new project</h2>
-  <form action="/create" method="post">
-    {% csrf_token %}
-    <table>
-      <tbody>
-        {{ create_form.as_table }}
-      </tbody>
-    </table>
-    <input id="createButton" type="submit" value="Create"/>
-  </form>
 </div>
 {% endblock %}

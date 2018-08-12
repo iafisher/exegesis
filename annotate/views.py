@@ -7,7 +7,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .import_project import download_from_github, import_from_github
-from .forms import CreateProjectForm, CreateSnippetForm, ImportProjectForm
+from .forms import ImportProjectForm
 from .models import Comment, Directory, Project, Snippet, get_from_path
 
 
@@ -24,7 +24,6 @@ def index(request):
         project.comment_count = comment_count[project.name]
 
     context = {
-        'create_form': CreateProjectForm(),
         'import_form': ImportProjectForm(),
         'projects': projects,
     }
@@ -41,7 +40,6 @@ def project_index(request, name):
     context = {
         'project': project,
         'directories': directories,
-        'form': CreateSnippetForm(),
         'snippets': snippets,
     }
     return render(request, 'annotate/directory.html', context)
@@ -64,7 +62,6 @@ def directory_index_core(request, project, directory):
         'project': project,
         'dir': directory,
         'directories': directories,
-        'form': CreateSnippetForm(),
         'snippets': snippets,
     }
     return render(request, 'annotate/directory.html', context)
@@ -105,48 +102,6 @@ def import_project(request):
                 return redirect('annotate:index')
         else:
             messages.error(request, 'Failed to import project.')
-            return redirect('annotate:failure')
-    else:
-        return redirect('annotate:index')
-
-
-@login_required
-def create_project(request):
-    if request.method == 'POST':
-        form = CreateProjectForm(request.POST)
-        if form.is_valid():
-            name = form.cleaned_data['projectname']
-            try:
-                Project.objects.create(name=name, source=Project.CUSTOM)
-            except:
-                messages.error(request, 'Failed to create project.')
-                return redirect('annotate:index')
-            else:
-                messages.success(request, 'Project created successfully.')
-                return redirect('annotate:index')
-        else:
-            messages.error(request, 'Failed to create project.')
-            return redirect('annotate:failure')
-    else:
-        return redirect('annotate:index')
-
-
-@login_required
-def create_snippet(request):
-    if request.method == 'POST':
-        form = CreateSnippetForm(request.POST)
-        if form.is_valid():
-            name = form.cleaned_data['projectname']
-            try:
-                Snippet.objects.create
-            except:
-                messages.error(request, 'Failed to create snippet.')
-                return redirect('annotate:index')
-            else:
-                messages.success(request, 'Snippet created successfully.')
-                return redirect('annotate:index')
-        else:
-            messages.error(request, 'Failed to create snippet.')
             return redirect('annotate:failure')
     else:
         return redirect('annotate:index')
