@@ -39,6 +39,9 @@ class Directory(models.Model):
             kwargs = {'project': self.project.name}
             return reverse('annotate:project_index', kwargs=kwargs)
 
+    def parent_chain(self):
+        return get_parent_chain(self.dirpath)
+
     def __str__(self):
         if self.fullpath:
             return '{0.project}:{0.fullpath}'.format(self)
@@ -64,6 +67,9 @@ class Snippet(models.Model):
     def get_absolute_url(self):
         kwargs = {'project': self.project.name, 'path': self.fullpath}
         return reverse('annotate:path', kwargs=kwargs)
+
+    def parent_chain(self):
+        return get_parent_chain(self.dirpath)
 
     def __str__(self):
         return '{0.project}:{0.fullpath}'.format(self)
@@ -94,3 +100,11 @@ def format_date(date):
     """Return a string in the form 'Tuesday 7 August 2018, 13:51 UTC'"""
     return date.strftime('%A ') + \
         date.strftime('%d %B %Y, %H:%M UTC').lstrip('0')
+
+
+def get_parent_chain(dirpath):
+    if not dirpath:
+        return []
+    else:
+        parent = Directory.objects.get(fullpath=dirpath[:-1])
+        return parent.parent_chain() + [parent]
