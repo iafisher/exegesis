@@ -2,7 +2,7 @@ import base64
 
 import requests
 
-from .models import Directory, Project, Snippet, get_from_path
+from .models import Directory, Project, Snippet
 
 
 def download_from_github(url):
@@ -26,25 +26,30 @@ def import_from_github(username, repo, commit_hash):
     r = requests.get(url, headers=headers)
     if r.status_code == 200:
         response = r.json()
-        project = Project(name='{}:{}'.format(username, repo),
-            source=Project.GITHUB)
+        project = Project(name=(username + ':' + repo), source=Project.GITHUB)
         project.save()
+
+        # Create the root directory.
+        Directory.objects.create(project=project, fullpath='', dirpath='',
+            name='')
+
         for entry in response['tree']:
-            last_slash = entry['path'].rfind('/')
-            if last_slash == -1:
-                parent = None
-                name = entry['path']
+            fullpath = entry['path']
+            last_slash = fullpath.rfind('/')
+            if last_slash != -1:
+                dirpath = fullpath[:last_slash+1]
+                name = fullpath[last_slash+1:]
             else:
-                parent = get_from_path(project, entry['path'][:last_slash])
-                name = entry['path'][last_slash+1:]
+                dirpath = ''
+                name = fullpath
 
             if entry['type'] == 'tree':
-                Directory.objects.create(project=project, name=name,
-                    parent=parent)
+                Directory.objects.create(project=project, fullpath=fullpath,
+                    dirpath=dirpath, name=name)
             else:
-                Snippet.objects.create(project=project, name=name,
-                    parent=parent, downloaded=False,
-                    download_source=entry['url'])
+                Snippet.objects.create(project=project, fullpath=fullpath,
+                    dirpath=dirpath, name=name,
+                    downloaded=False, download_source=entry['url'])
         return True
     else:
         return False

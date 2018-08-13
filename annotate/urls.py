@@ -7,8 +7,8 @@ app_name = 'annotate'
 urlpatterns = [
     path('', views.index, name='index'),
 
-    path('project/<name>', views.project_index, name='project_index'),
-    path('project/<name>/<path:path>', views.path, name='path'),
+    path('project/<project>', views.path, name='project_index'),
+    path('project/<project>/<path:path>', views.path, name='path'),
 
     path('import', views.import_project, name='import_project'),
 

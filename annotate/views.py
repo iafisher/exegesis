@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from .import_project import download_from_github, import_from_github
 from .forms import ImportProjectForm
-from .models import Comment, Directory, Project, Snippet, get_from_path
+from .models import Comment, Directory, Project, Snippet
 
 
 @login_required
@@ -31,33 +31,26 @@ def index(request):
 
 
 @login_required
-def project_index(request, name):
-    project = get_object_or_404(Project, name=name)
-    directories = project.directory_set.filter(project=project, parent=None) \
-        .order_by('name')
-    snippets = project.snippet_set.filter(project=project, parent=None) \
-        .order_by('name')
-    context = {
-        'project': project,
-        'directories': directories,
-        'snippets': snippets,
-    }
-    return render(request, 'annotate/directory.html', context)
-
-
-@login_required
-def path(request, name, path):
-    project = get_object_or_404(Project, name=name)
-    snippet_or_directory = get_from_path(project, path)
-    if isinstance(snippet_or_directory, Snippet):
-        return snippet_index_core(request, project, snippet_or_directory)
+def path(request, project, path=''):
+    project = get_object_or_404(Project, name=project)
+    try:
+        snippet = Snippet.objects.get(project=project, fullpath=path)
+    except Snippet.DoesNotExist:
+        directory = get_object_or_404(Directory, project=project, fullpath=path)
+        return directory_index_core(request, directory)
     else:
-        return directory_index_core(request, project, snippet_or_directory)
+        return snippet_index_core(request, snippet)
 
 
-def directory_index_core(request, project, directory):
-    directories = Directory.objects.filter(project=project, parent=directory)
-    snippets = Snippet.objects.filter(project=project, parent=directory)
+def directory_index_core(request, directory):
+    path = directory.fullpath + '/' if directory.fullpath else ''
+    project = directory.project
+
+    directories = Directory.objects.filter(project=project,
+        dirpath=path).order_by('name')
+    snippets = Snippet.objects.filter(project=project, dirpath=path) \
+        .order_by('name')
+
     context = {
         'project': project,
         'dir': directory,
@@ -67,23 +60,14 @@ def directory_index_core(request, project, directory):
     return render(request, 'annotate/directory.html', context)
 
 
-@login_required
-def snippet_index_core(request, project, snippet):
+def snippet_index_core(request, snippet):
     if not snippet.downloaded and snippet.project.source == Project.GITHUB:
         contents = download_from_github(snippet.download_source)
         if contents:
             snippet.text = contents
             snippet.downloaded = True
             snippet.save()
-
-    comments = Comment.objects.filter(snippet=snippet)
-    context = {
-        'comments_json': json.dumps([c.to_json() for c in comments]),
-        'path_json': json.dumps(snippet.get_path()),
-        'project_json': json.dumps(project.name),
-        'snippet': snippet,
-    }
-    return render(request, 'annotate/snippet.html', context)
+    return render(request, 'annotate/snippet.html', {'snippet': snippet})
 
 
 @login_required
@@ -96,13 +80,13 @@ def import_project(request):
                     form.cleaned_data['reponame'], form.cleaned_data['sha'])
             except:
                 messages.error(request, 'Failed to import project.')
-                return redirect('annotate:failure')
+                return redirect('annotate:index')
             else:
                 messages.success(request, 'Project imported successfully.')
                 return redirect('annotate:index')
         else:
             messages.error(request, 'Failed to import project.')
-            return redirect('annotate:failure')
+            return redirect('annotate:index')
     else:
         return redirect('annotate:index')
 
