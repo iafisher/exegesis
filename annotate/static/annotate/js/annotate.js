@@ -82,6 +82,7 @@ function renderComment(comment) {
         removeRow(comment.lineno);
         insertRow(comment.lineno, renderHiddenComment(comment));
     });
+    hideButton.classList.add("hide-button");
 
     let converter = new showdown.Converter();
     let markdownP = document.createElement("p");

@@ -1,9 +1,44 @@
 li i {
-    margin-right: 7px;
+  margin-right: 7px;
 }
 
 ul {
-    list-style-type: none;
-    font-size: 18px;
-    line-height: 1.5;
+  list-style-type: none;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+#comment-div {
+  background-color: whitesmoke;
+  padding-left: 10px;
+  padding-right: 15px;
+  padding-bottom: 10px;
+  display: none;
+  overflow: hidden;
+}
+
+@media screen and (min-width: 880px) {
+  #comment-div {
+    width: 600px;
+  }
+}
+
+@media screen and (max-width: 879px) {
+  #comment-div {
+    width: 100%;
+  }
+}
+
+#comment-div textarea {
+  width: 100%;
+  height: 100px;
+}
+
+#comment-div button {
+  float: right;
+}
+
+/* No point in hiding comments when there can only be one per page. */
+.show-button, .hide-button {
+  display: none;
 }

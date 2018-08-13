@@ -19,14 +19,20 @@ function onload() {
 
 
 function insertRow(lineno, element) {
-    document.getElementById("comment-div").appendChild(element);
+    let div = document.getElementById("comment-div");
+    div.appendChild(element);
+    div.style.display = "block";
+
     let button = document.getElementById("create-comment");
     button.style.display = "none";
 }
 
 
 function removeRow(lineno) {
-    document.getElementById("comment-div").innerHTML = "";
+    let div = document.getElementById("comment-div");
+    div.innerHTML = "";
+    div.style.display = "none";
+
     let button = document.getElementById("create-comment");
     button.style.display = "inline-block";
 }
