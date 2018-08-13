@@ -47,7 +47,7 @@ def directory_index_core(request, directory):
     project = directory.project
 
     directories = Directory.objects.filter(project=project,
-        dirpath=path).order_by('name')
+        dirpath=path).exclude(fullpath='').order_by('name')
     snippets = Snippet.objects.filter(project=project, dirpath=path) \
         .order_by('name')
 

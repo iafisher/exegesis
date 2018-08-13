@@ -26,6 +26,10 @@ class Project(models.Model):
 
 
 class Directory(models.Model):
+    # Invariant: fullpath == dirpath + name
+    # dirpath always ends with a forward slash, except for root and children of
+    # root.
+    # fullpath == dirpath == name == "" for root directory
     fullpath = models.TextField(blank=True)
     dirpath = models.TextField(blank=True)
     name = models.CharField(max_length=256, blank=True)
@@ -53,6 +57,9 @@ class Directory(models.Model):
 
 
 class Snippet(models.Model):
+    # Invariant: fullpath == dirpath + name
+    # dirpath always ends with a forward slash, except for root and children of
+    # root.
     fullpath = models.TextField()
     dirpath = models.TextField()
     name = models.CharField(max_length=256)
