@@ -5,6 +5,19 @@
 {% block title %}Exegesis | {{ project.name }}/{{ dir.name }}{% endblock %}
 
 {% block extrahead %}
+<!-- Showdown for Markdown to HTML conversion -->
+<script src="https://cdn.rawgit.com/showdownjs/showdown/1.8.6/dist/showdown.min.js"></script>
+
+<script>
+{% autoescape off %}
+//var PATH = {{ path_json }};
+//var PROJECT = {{ project_json }};
+var USER = "{{ user.username }}";
+{% endautoescape %}
+</script>
+
+<script src="{% static 'annotate/js/annotate.js' %}"></script>
+<script src="{% static 'annotate/js/directory.js' %}"></script>
 <link rel="stylesheet" href="{% static 'annotate/css/directory.css' %}">
 {% endblock %}
 
@@ -45,5 +58,8 @@
     <li>This directory is empty.</li>
     {% endif %}
   </ul>
+
+  <button id="create-comment">Create a comment</button>
+  <div id="comment-div"></div>
 </div>
 {% endblock %}

@@ -5,7 +5,7 @@
  * associated with their buttons. Users of the library are required to
  * implement the following functions:
  *
- *   insertElement(lineno, element): Insert an HTML element into the document.
+ *   insertRow(lineno, element): Insert an HTML element into the document.
  *   removeRow(lineno): Remove a row created by insertElement.
  *   saveCommentToDatabase(lineno, text): Save the comment to the database.
  *   deleteCommentFromDatabase(lineno): Delete the comment from the database.
