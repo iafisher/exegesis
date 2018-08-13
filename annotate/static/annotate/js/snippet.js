@@ -12,7 +12,8 @@ if (document.readyState === "complete" || (document.readyState !== "loading" &&
 
 let csrftoken = Cookies.get("csrftoken");
 function onload() {
-    fetch("/api/fetch?project=" + PROJECT + "&path=" + PATH, {
+    let path = getPath();
+    fetch("/api/"+ path + "/fetch", {
         method: "get",
         headers: {
             "X-CSRFToken": csrftoken,
@@ -86,10 +87,18 @@ function removeRow(lineno) {
 
 
 function saveCommentToDatabase(lineno, text) {
-    postData("/api/update", { text: text, lineno: lineno });
+    let path = getPath();
+    postData("/api/" + path + "/update_comment", { text: text, lineno: lineno });
 }
 
 
 function deleteCommentFromDatabase(lineno) {
-    postData("/api/delete", { lineno: lineno });
+    let path = getPath();
+    postData("/api/"+ path + "/delete_comment", { lineno: lineno });
+}
+
+
+function getPath() {
+    let index = window.location.href.indexOf("/project/");
+    return window.location.href.slice(index + 9);
 }

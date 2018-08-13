@@ -157,9 +157,6 @@ function renderEditForm(comment) {
  * Post the plain object `data` to the given URL.
  */
 function postData(url, data) {
-    // `PROJECT` and `PATH` are global variables defined in snippet.html.
-    data.project = PROJECT;
-    data.path = PATH;
     fetch(url, {
         method: "post",
         headers: {
