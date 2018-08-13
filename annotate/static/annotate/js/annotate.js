@@ -55,7 +55,7 @@ function onFetch(data) {
         trow.addEventListener("click", event => {
             let nextRow = event.target.parentNode.nextElementSibling;
             if (nextRow === null || !nextRow.classList.contains("comment-row")) {
-                renderNewForm(i + 1);
+                insertRow(i + 1, renderNewForm(i + 1));
             }
         });
 
@@ -72,11 +72,10 @@ function onFetch(data) {
         tbody.appendChild(trow);
     }
 
-    let insertCount = 0;
     for (let comment of data["comments"]) {
-        renderComment(new Comment(comment.lineno, comment.user, comment.text,
-            comment.created, comment.last_updated));
-        insertCount++;
+        comment = new Comment(comment.lineno, comment.user, comment.text,
+            comment.created, comment.last_updated);
+        insertRow(comment.lineno, renderComment(comment));
     }
 }
 
@@ -92,6 +91,17 @@ function Comment(lineno, creator, text, created, lastUpdated) {
 }
 
 
+function insertRow(lineno, element) {
+    let commentRow = document.createElement("tr");
+    commentRow.classList.add("comment-row");
+    commentRow.appendChild(document.createElement("td"));
+    let tableData = document.createElement("td");
+    tableData.appendChild(element);
+    commentRow.appendChild(tableData);
+    insertAfter(lineno, commentRow);
+}
+
+
 function renderNewForm(lineno) {
     let textarea = document.createElement("textarea");
     textarea.classList.add("comment");
@@ -103,93 +113,88 @@ function renderNewForm(lineno) {
         preview.innerHTML = converter.makeHtml(textarea.value);
     };
 
-    let commentRow = document.createElement("tr");
-    commentRow.classList.add("comment-row");
-
     let cancelButton = buttonFactory("Cancel", () => {
-        commentRow.remove();
+        removeRow(lineno);
     })
 
     let saveButton = buttonFactory("Save", () => {
         let text = textarea.value.trim();
+        removeRow(lineno);
         if (text.length > 0) {
             saveCommentToDatabase(lineno, text);
             let now = formatDate(new Date());
-            renderComment(new Comment(lineno, USER, text, now, now));
+            let commentDiv = renderComment(new Comment(lineno, USER, text,
+                now, now));
+            insertRow(lineno, commentDiv);
         }
-        commentRow.remove()
     });
 
-    commentRow.appendChild(document.createElement("td"));
-
-    let tableData = document.createElement("td");
-    commentRow.appendChild(tableData);
-    tableData.appendChild(P("Commenting as: " + USER));
-    tableData.appendChild(textarea);
-    tableData.appendChild(preview);
-    tableData.appendChild(cancelButton);
-    tableData.appendChild(saveButton);
-
-    insertAfter(lineno, commentRow);
+    let commentDiv = document.createElement("div");
+    commentDiv.appendChild(P("Commenting as: " + USER));
+    commentDiv.appendChild(textarea);
+    commentDiv.appendChild(preview);
+    commentDiv.appendChild(cancelButton);
+    commentDiv.appendChild(saveButton);
+    return commentDiv;
 }
 
 
 function renderComment(comment) {
-    let commentRow = commentRowFactory();
-
     let deleteButton = buttonFactory("Delete", () => {
         if (window.confirm("Are you sure you want to delete this comment?")) {
-            commentRow.remove();
+            removeRow(comment.lineno);
             deleteCommentFromDatabase(comment.lineno);
         }
     });
 
     let editButton = buttonFactory("Edit", () => {
-        commentRow.remove();
-        renderEditForm(comment);
+        removeRow(comment.lineno);
+        insertRow(comment.lineno, renderEditForm(comment));
     });
 
     let hideButton = buttonFactory("Hide", () => {
-        commentRow.remove();
-        renderHiddenComment(comment);
+        removeRow(comment.lineno);
+        insertRow(comment.lineno, renderHiddenComment(comment));
     });
 
     let converter = new showdown.Converter();
     let markdownP = document.createElement("p");
     markdownP.innerHTML = converter.makeHtml(comment.text);
 
-    let td = document.createElement("td");
-    td.appendChild(markdownP);
-    td.appendChild(document.createElement("hr"));
-    td.appendChild(P("Created on " + comment.created + " by " + comment.creator));
+    let commentDiv = document.createElement("div");
+    commentDiv.appendChild(markdownP);
+    commentDiv.appendChild(document.createElement("hr"));
+    commentDiv.appendChild(P("Created on " + comment.created + " by "
+        + comment.creator));
+
     if (comment.created !== comment.lastUpdated) {
-        td.appendChild(P("Last updated on " + comment.lastUpdated));
+        commentDiv.appendChild(P("Last updated on " + comment.lastUpdated));
     }
     if (USER === comment.creator) {
-        td.appendChild(deleteButton);
-        td.appendChild(editButton);
+        commentDiv.appendChild(deleteButton);
+        commentDiv.appendChild(editButton);
     }
-    td.appendChild(hideButton);
-    commentRow.appendChild(td);
+    commentDiv.appendChild(hideButton);
+    return commentDiv;
+}
 
-    insertAfter(comment.lineno, commentRow);
+
+function removeRow(lineno) {
+    let commentRow = document.getElementById("line-" + lineno).nextSibling;
+    commentRow.remove();
 }
 
 
 function renderHiddenComment(comment) {
-    let commentRow = commentRowFactory();
-
     let showButton = buttonFactory("Show hidden comment", () => {
-        commentRow.remove();
-        renderComment(comment);
+        removeRow(comment.lineno);
+        insertRow(comment.lineno, renderComment(comment));
     });
     showButton.classList.add("show-button")
 
-    let td = document.createElement("td");
-    td.appendChild(showButton);
-    commentRow.appendChild(td);
-
-    insertAfter(comment.lineno, commentRow);
+    let commentDiv = document.createElement("div");
+    commentDiv.appendChild(showButton);
+    return commentDiv;
 }
 
 
@@ -198,46 +203,32 @@ function renderEditForm(comment) {
     textarea.classList.add("comment");
     textarea.value = comment.text;
 
-    let commentRow = commentRowFactory();
-
     let cancelButton = buttonFactory("Cancel", () => {
-        commentRow.remove();
-        renderComment(comment);
+        removeRow(comment.lineno);
+        insertRow(comment.lineno, renderComment(comment));
     })
 
     let saveButton = buttonFactory("Save", () => {
         let newText = textarea.value.trim();
+        removeRow(comment.lineno);
         if (newText.length > 0) {
             if (newText !== comment.text) {
                 saveCommentToDatabase(comment.lineno, newText);
                 comment.text = newText;
                 comment.lastUpdated = formatDate(new Date());
-                renderComment(comment);
-            } else {
-                renderComment(comment);
             }
+            insertRow(comment.lineno, renderComment(comment));
         } else {
             deleteCommentFromDatabase(comment.lineno);
         }
-        commentRow.remove();
     });
 
-    let td = document.createElement("td");
-    td.appendChild(P("Commenting as: " + USER));
-    td.appendChild(textarea);
-    td.appendChild(cancelButton);
-    td.appendChild(saveButton);
-    commentRow.appendChild(td);
-
-    insertAfter(comment.lineno, commentRow);
-}
-
-
-function commentRowFactory() {
-    let commentRow = document.createElement("tr");
-    commentRow.classList.add("comment-row");
-    commentRow.appendChild(document.createElement("td"));
-    return commentRow;
+    let commentDiv = document.createElement("div");
+    commentDiv.appendChild(P("Commenting as: " + USER));
+    commentDiv.appendChild(textarea);
+    commentDiv.appendChild(cancelButton);
+    commentDiv.appendChild(saveButton);
+    return commentDiv;
 }
 
 
