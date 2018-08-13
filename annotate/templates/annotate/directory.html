@@ -39,6 +39,11 @@
       </a>
     </li>
     {% endfor %}
+
+
+    {% if directories|length == 0 and snippets|length == 0 %}
+    <li>This directory is empty.</li>
+    {% endif %}
   </ul>
 </div>
 {% endblock %}
