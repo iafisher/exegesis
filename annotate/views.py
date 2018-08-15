@@ -101,12 +101,12 @@ def login(request):
             return redirect(request.POST['next'] or '/')
         else:
             blank_form = AuthenticationForm()
-            context = {
-                'form': blank_form,
-                'errormsg': 'Invalid username or password',
-            }
-            return render(request, 'annotate/login.html', context)
+            messages.error(request, 'Invalid username or password')
+            return render(request, 'annotate/login.html', {'form': blank_form})
     else:
+        if request.user is not None:
+            return redirect('/')
+
         form = AuthenticationForm()
         context = {
             'form': form,
