@@ -2,5 +2,6 @@ __pycache__
 *.sqlite3
 *.swp
 *.log
+todo.md
 
 /exegesis/settings_secret.py
