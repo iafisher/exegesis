@@ -13,7 +13,7 @@
   <h1>Exegesis</h1>
 
   {% for message in messages %}
-  <p>{{ message }}</p>
+  <p id="message-{{ forloop.counter }}">{{ message }}</p>
   {% endfor %}
 
   <h2>Available projects</h2>

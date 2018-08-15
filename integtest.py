@@ -48,10 +48,14 @@ class NewVisitorTest(unittest.TestCase):
         sha_input = self.browser.find_element_by_id('id_sha')
         sha_input.send_keys('e8101b81318b644e2b2b2cbb60e11c17433ee6c4')
 
-        #self.browser.find_element_by_id('importButton').click()
+        ret = self.browser.find_element_by_id('importButton').click()
 
         # Wait for the server to import the project.
         time.sleep(1)
+
+        # Make sure the project was imported successfully.
+        msg = self.browser.find_element_by_id('message-1')
+        self.assertEqual(msg.text, 'Project imported successfully.')
 
         # Visit the project index.
         self.browser.get(URL + 'project/iafisher:writingstreak')
@@ -61,15 +65,16 @@ class NewVisitorTest(unittest.TestCase):
 
         self.assertEqual(len(anchors), 9)
 
-        self.assertTrue(any(a.text == 'api' for a in anchors))
-        self.assertTrue(any(a.text == 'compose' for a in anchors))
-        self.assertTrue(any(a.text == 'frontend' for a in anchors))
-        self.assertTrue(any(a.text == 'writingstreak' for a in anchors))
-        self.assertTrue(any(a.text == '.gitignore' for a in anchors))
-        self.assertTrue(any(a.text == 'LICENSE' for a in anchors))
-        self.assertTrue(any(a.text == 'README.txt' for a in anchors))
-        self.assertTrue(any(a.text == 'manage.py' for a in anchors))
-        self.assertTrue(any(a.text == 'requirements.txt' for a in anchors))
+        anchors_text = [a.text for a in anchors]
+        self.assertIn('api', anchors_text)
+        self.assertIn('compose', anchors_text)
+        self.assertIn('frontend', anchors_text)
+        self.assertIn('writingstreak', anchors_text)
+        self.assertIn('.gitignore', anchors_text)
+        self.assertIn('LICENSE', anchors_text)
+        self.assertIn('README.txt', anchors_text)
+        self.assertIn('manage.py', anchors_text)
+        self.assertIn('requirements.txt', anchors_text)
 
         # Visit a folder.
         self.browser.get(URL + 'project/iafisher:writingstreak/api')
@@ -79,11 +84,12 @@ class NewVisitorTest(unittest.TestCase):
 
         self.assertEqual(len(anchors), 5)
 
-        self.assertTrue(any(a.text == '__init__.py' for a in anchors))
-        self.assertTrue(any(a.text == 'apps.py' for a in anchors))
-        self.assertTrue(any(a.text == 'tests.py' for a in anchors))
-        self.assertTrue(any(a.text == 'urls.py' for a in anchors))
-        self.assertTrue(any(a.text == 'views.py' for a in anchors))
+        anchors_text = [a.text for a in anchors]
+        self.assertIn('__init__.py', anchors_text)
+        self.assertIn('apps.py', anchors_text)
+        self.assertIn('tests.py', anchors_text)
+        self.assertIn('urls.py', anchors_text)
+        self.assertIn('views.py', anchors_text)
 
 
 if __name__ == '__main__':
