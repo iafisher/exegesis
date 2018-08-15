@@ -1,5 +1,6 @@
 __pycache__
 *.sqlite3
 *.swp
+*.log
 
 /exegesis/settings_secret.py

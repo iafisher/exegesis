@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Login | Writing Streak{% endblock %}
+{% block title %}Login | Exegesis{% endblock %}
 
 {% block extrahead %}
 <style>
@@ -20,7 +20,7 @@
     {% csrf_token %}
     {{ form.as_p }}
     <input type="hidden" name="next" value="{{ next|default_if_none:"/" }}" />
-    <input type="submit" value="Log in" />
+    <input type="submit" value="Log in" id="submit" />
   </form>
 </div>
 {% endblock %}
