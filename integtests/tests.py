@@ -4,15 +4,17 @@ Author:  Ian Fisher (iafisher@protonmail.com)
 Version: August 2018
 """
 import time
-import unittest
 
 from django.contrib.auth import get_user_model
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 
 
 TEST_USERNAME = 'testuser'
 TEST_PASSWORD = 'Temporary'
+
+MAX_WAIT = 10
 
 
 class NewVisitorTest(StaticLiveServerTestCase):
@@ -34,9 +36,7 @@ class NewVisitorTest(StaticLiveServerTestCase):
         password_input.send_keys(TEST_PASSWORD)
 
         self.browser.find_element_by_id('submit').click()
-
-        # Wait for authentication and redirection to main page.
-        time.sleep(0.5)
+        self.wait_for_index_page_load()
 
         # Enter the information for a GitHub repo.
         username_input = self.browser.find_element_by_id('id_username')
@@ -49,9 +49,7 @@ class NewVisitorTest(StaticLiveServerTestCase):
         sha_input.send_keys('e8101b81318b644e2b2b2cbb60e11c17433ee6c4')
 
         ret = self.browser.find_element_by_id('importButton').click()
-
-        # Wait for the server to import the project.
-        time.sleep(1)
+        self.wait_for_message()
 
         # Make sure the project was imported successfully.
         msg = self.browser.find_element_by_id('message-1')
@@ -90,3 +88,22 @@ class NewVisitorTest(StaticLiveServerTestCase):
         self.assertIn('tests.py', anchors_text)
         self.assertIn('urls.py', anchors_text)
         self.assertIn('views.py', anchors_text)
+
+    def wait_for_index_page_load(self):
+        start_time = time.time()
+        while 'Login' in self.browser.title:
+            if time.time() - start_time > MAX_WAIT:
+                raise Exception('Did not load index page quickly enough')
+            time.sleep(0.1)
+
+    def wait_for_message(self):
+        start_time = time.time()
+        while True:
+            try:
+                self.browser.find_element_by_id('message-1')
+            except WebDriverException:
+                if time.time() - start_time > MAX_WAIT:
+                    raise Exception('Did not render message quickly enough')
+                time.sleep(0.1)
+            else:
+                break
