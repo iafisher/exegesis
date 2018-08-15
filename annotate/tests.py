@@ -40,7 +40,11 @@ class TestPages(TestCase):
         User = get_user_model()
         User.objects.create_user('temporary', 'temporary@gmail.com', 'pwd')
 
-    def test_index_page_html(self):
+    def test_index_page_template(self):
         self.client.login(username='temporary', password='pwd')
         response = self.client.get('/')
         self.assertTemplateUsed(response, 'annotate/index.html')
+
+    def test_login_page_template(self):
+        response = self.client.get('/login')
+        self.assertTemplateUsed(response, 'annotate/login.html')

@@ -33,10 +33,8 @@ class NewVisitorTest(unittest.TestCase):
 
         self.browser.find_element_by_id('submit').click()
 
+        # Wait for authentication and redirection to main page.
         time.sleep(0.5)
-
-        # Load up the main page.
-        self.browser.get(URL)
 
         # Enter the information for a GitHub repo.
         username_input = self.browser.find_element_by_id('id_username')

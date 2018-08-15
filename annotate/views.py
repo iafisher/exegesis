@@ -104,7 +104,7 @@ def login(request):
             messages.error(request, 'Invalid username or password')
             return render(request, 'annotate/login.html', {'form': blank_form})
     else:
-        if request.user is not None:
+        if request.user.is_authenticated:
             return redirect('/')
 
         form = AuthenticationForm()
