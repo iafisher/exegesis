@@ -28,20 +28,12 @@ class NewVisitorTest(StaticLiveServerTestCase):
         self.browser.quit()
 
     def test_can_import_repo(self):
-        # Log in to the site.
-        self.browser.get(self.live_server_url + '/login')
-        username_input = self.browser.find_element_by_id('id_username')
-        username_input.send_keys(TEST_USERNAME)
-        password_input = self.browser.find_element_by_id('id_password')
-        password_input.send_keys(TEST_PASSWORD)
-
-        self.browser.find_element_by_id('submit').click()
-        self.wait_for_index_page_load()
+        self.log_myself_in()
 
         # Enter the information for a GitHub repo.
         username_input = self.browser.find_element_by_id('id_username')
         username_input.send_keys('iafisher')
-        
+
         repo_input = self.browser.find_element_by_id('id_reponame')
         repo_input.send_keys('writingstreak')
 
@@ -88,6 +80,29 @@ class NewVisitorTest(StaticLiveServerTestCase):
         self.assertIn('tests.py', anchors_text)
         self.assertIn('urls.py', anchors_text)
         self.assertIn('views.py', anchors_text)
+
+    def test_styling_and_layout(self):
+        self.log_myself_in()
+        self.browser.get(self.live_server_url)
+
+        # Make sure that the main container is centered.
+        self.browser.set_window_size(1024, 768)
+        div = self.browser.find_element_by_class_name('container')
+        self.assertAlmostEqual(
+            div.location['x'] + div.size['width'] / 2,
+            512,
+            delta=10
+        )
+
+    def log_myself_in(self):
+        self.browser.get(self.live_server_url + '/login')
+        username_input = self.browser.find_element_by_id('id_username')
+        username_input.send_keys(TEST_USERNAME)
+        password_input = self.browser.find_element_by_id('id_password')
+        password_input.send_keys(TEST_PASSWORD)
+
+        self.browser.find_element_by_id('submit').click()
+        self.wait_for_index_page_load()
 
     def wait_for_index_page_load(self):
         start_time = time.time()
