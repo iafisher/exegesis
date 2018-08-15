@@ -65,3 +65,21 @@ class TestPages(TestCase):
 
         response = self.client.get('/project/temporary/README.txt')
         self.assertTemplateUsed(response, 'annotate/snippet.html')
+
+    def test_login_page_redirects(self):
+        self.client.login(username='temporary', password='pwd')
+        response = self.client.get('/login')
+        self.assertRedirects(response, '/')
+
+    def test_index_page_redirects(self):
+        response = self.client.get('/')
+        self.assertRedirects(response, '/login/?next=/')
+
+    def test_logout_page_redirects(self):
+        self.client.login(username='temporary', password='pwd')
+        response = self.client.get('/logout')
+        self.assertRedirects(response, '/login')
+
+        # Can't access pages after logging out.
+        response = self.client.get('/')
+        self.assertRedirects(response, '/login/?next=/')
