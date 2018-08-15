@@ -1,31 +1,33 @@
-"""An integration test for the Exegesis site.
+"""Integration tests for the Exegesis site.
 
-A couple of things need to be done before running this test:
-
-    1. Make sure that a user with the credentials TEST_USERNAME, TEST_PASSWORD
-       exists.
-    2. Make sure that the project 'iafisher:writingstreak' does NOT exist.
+Author:  Ian Fisher (iafisher@protonmail.com)
+Version: August 2018
 """
-from selenium import webdriver
 import time
 import unittest
+
+from django.contrib.auth import get_user_model
+from django.test import LiveServerTestCase
+from selenium import webdriver
 
 
 TEST_USERNAME = 'testuser'
 TEST_PASSWORD = 'Temporary'
-URL = 'http://localhost:8000/'
 
 
-class NewVisitorTest(unittest.TestCase):
+class NewVisitorTest(LiveServerTestCase):
     def setUp(self):
         self.browser = webdriver.Firefox()
+        User = get_user_model()
+        User.objects.create_user(TEST_USERNAME, 'temporary@gmail.com',
+            TEST_PASSWORD)
 
     def tearDown(self):
         self.browser.quit()
 
     def test_can_import_repo(self):
         # Log in to the site.
-        self.browser.get(URL + 'login')
+        self.browser.get(self.live_server_url + '/login')
         username_input = self.browser.find_element_by_id('id_username')
         username_input.send_keys(TEST_USERNAME)
         password_input = self.browser.find_element_by_id('id_password')
@@ -56,7 +58,7 @@ class NewVisitorTest(unittest.TestCase):
         self.assertEqual(msg.text, 'Project imported successfully.')
 
         # Visit the project index.
-        self.browser.get(URL + 'project/iafisher:writingstreak')
+        self.browser.get(self.live_server_url + '/project/iafisher:writingstreak')
 
         dlist = self.browser.find_element_by_id('directory-list')
         anchors = dlist.find_elements_by_tag_name('a')
@@ -75,7 +77,7 @@ class NewVisitorTest(unittest.TestCase):
         self.assertIn('requirements.txt', anchors_text)
 
         # Visit a folder.
-        self.browser.get(URL + 'project/iafisher:writingstreak/api')
+        self.browser.get(self.live_server_url + '/project/iafisher:writingstreak/api')
 
         dlist = self.browser.find_element_by_id('directory-list')
         anchors = dlist.find_elements_by_tag_name('a')
@@ -88,7 +90,3 @@ class NewVisitorTest(unittest.TestCase):
         self.assertIn('tests.py', anchors_text)
         self.assertIn('urls.py', anchors_text)
         self.assertIn('views.py', anchors_text)
-
-
-if __name__ == '__main__':
-    unittest.main()
