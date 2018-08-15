@@ -7,7 +7,7 @@ import time
 import unittest
 
 from django.contrib.auth import get_user_model
-from django.test import LiveServerTestCase
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from selenium import webdriver
 
 
@@ -15,7 +15,7 @@ TEST_USERNAME = 'testuser'
 TEST_PASSWORD = 'Temporary'
 
 
-class NewVisitorTest(LiveServerTestCase):
+class NewVisitorTest(StaticLiveServerTestCase):
     def setUp(self):
         self.browser = webdriver.Firefox()
         User = get_user_model()
