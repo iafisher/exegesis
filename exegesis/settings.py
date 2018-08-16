@@ -12,19 +12,19 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 
-from .settings_secret import *
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
+if 'EXEGESIS_DJANGO_DEBUG_FALSE' in os.environ:
+    DEBUG = False
+    SECRET_KEY = os.environ['EXEGESIS_DJANGO_SECRET_KEY']
+    ALLOWED_HOSTS = [os.environ['EXEGESIS_SITENAME']]
+else:
+    DEBUG = True
+    SECRET_KEY = '%sd7a0zr%%0$)w$oc@cxg&pp66+u+_tcsw98qufuj+4qvl*9^*'
+    ALLOWED_HOSTS = []
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
 
 # Application definition
 
