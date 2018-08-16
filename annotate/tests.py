@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.http import HttpRequest
 from django.test import TestCase
 from django.urls import resolve
 from . import models, views
@@ -15,6 +14,10 @@ class TestURLs(TestCase):
     def test_can_resolve_login(self):
         found = resolve('/login')
         self.assertEqual(found.func, views.login)
+
+    def test_can_resolve_logout(self):
+        found = resolve('/logout')
+        self.assertEqual(found.func, views.logout)
 
     def test_can_resolve_import(self):
         found = resolve('/import')
@@ -38,7 +41,7 @@ class TestPages(TestCase):
 
     def setUp(self):
         User = get_user_model()
-        User.objects.create_user('temporary', 'temporary@gmail.com', 'pwd')
+        User.objects.create_user('temporary', 'temporary@example.com', 'pwd')
 
     def test_index_page_template(self):
         self.client.login(username='temporary', password='pwd')
