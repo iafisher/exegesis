@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import resolve
-from . import models, views
+from . import forms, models, views
 
 
 class TestURLs(TestCase):
@@ -86,3 +86,10 @@ class TestPages(TestCase):
         # Can't access pages after logging out.
         response = self.client.get('/')
         self.assertRedirects(response, '/login/?next=/')
+
+
+class TestForms(TestCase):
+    def test_all_fields_required(self):
+        form = forms.ImportProjectForm(data={'username': 'iafisher'})
+        with self.assertRaises(ValueError):
+            form.save()
