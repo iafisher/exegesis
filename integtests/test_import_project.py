@@ -1,5 +1,4 @@
-"""Integration tests for the Exegesis site.
-
+"""
 Author:  Ian Fisher (iafisher@protonmail.com)
 Version: August 2018
 """
@@ -17,7 +16,7 @@ TEST_PASSWORD = 'Temporary'
 MAX_WAIT = 10
 
 
-class NewVisitorTest(StaticLiveServerTestCase):
+class ImportProjectTest(StaticLiveServerTestCase):
     def setUp(self):
         self.browser = webdriver.Firefox()
         User = get_user_model()
@@ -80,19 +79,6 @@ class NewVisitorTest(StaticLiveServerTestCase):
         self.assertIn('tests.py', anchors_text)
         self.assertIn('urls.py', anchors_text)
         self.assertIn('views.py', anchors_text)
-
-    def test_styling_and_layout(self):
-        self.log_myself_in()
-        self.browser.get(self.live_server_url)
-
-        # Make sure that the main container is centered.
-        self.browser.set_window_size(1024, 768)
-        div = self.browser.find_element_by_class_name('container')
-        self.assertAlmostEqual(
-            div.location['x'] + div.size['width'] / 2,
-            512,
-            delta=10
-        )
 
     def log_myself_in(self):
         self.browser.get(self.live_server_url + '/login')
