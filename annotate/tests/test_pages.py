@@ -1,39 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-from django.urls import resolve
-from . import forms, models, views
-
-
-class TestURLs(TestCase):
-    """Test that URLs resolve to the expected views."""
-
-    def test_can_resolve_index(self):
-        found = resolve('/')
-        self.assertEqual(found.func, views.index)
-
-    def test_can_resolve_login(self):
-        found = resolve('/login')
-        self.assertEqual(found.func, views.login)
-
-    def test_can_resolve_logout(self):
-        found = resolve('/logout')
-        self.assertEqual(found.func, views.logout)
-
-    def test_can_resolve_import(self):
-        found = resolve('/import')
-        self.assertEqual(found.func, views.import_project)
-
-    def test_can_resolve_project_path(self):
-        found = resolve('/project/python:cpython')
-        self.assertEqual(found.func, views.path)
-
-    def test_can_resolve_directory_path(self):
-        found = resolve('/project/python:cpython/Python')
-        self.assertEqual(found.func, views.path)
-
-    def test_can_resolve_snippet_path(self):
-        found = resolve('/project/python:cpython/LICENSE')
-        self.assertEqual(found.func, views.path)
+from annotate import models
 
 
 class TestPages(TestCase):
@@ -86,10 +53,3 @@ class TestPages(TestCase):
         # Can't access pages after logging out.
         response = self.client.get('/')
         self.assertRedirects(response, '/login/?next=/')
-
-
-class TestForms(TestCase):
-    def test_all_fields_required(self):
-        form = forms.ImportProjectForm(data={'username': 'iafisher'})
-        with self.assertRaises(ValueError):
-            form.save()
